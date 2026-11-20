@@ -1,0 +1,14 @@
+{
+    "name": "trackflow-hito2",
+    "version": "1.0.0",
+    "description": "TrackFlow Hito 2 — Fundamentos de Programación (TypeScript)",
+    "type": "module",
+    "scripts": {
+        "typecheck": "npx tsc --noEmit",
+        "demo": "npx tsx src/demo.ts"
+    },
+    "devDependencies": {
+        "tsx": "^4.19.0",
+        "typescript": "^5.6.0"
+    }
+}

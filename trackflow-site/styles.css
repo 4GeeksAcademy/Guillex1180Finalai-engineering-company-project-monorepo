@@ -1,0 +1,276 @@
+/* ============================================================
+   styles.css — Estilos adicionales para el sitio TrackFlow
+   Complementa Tailwind CSS CDN con estilos personalizados.
+   ============================================================ */
+
+/* ---- Variables de color (por si Tailwind no se carga) ---- */
+:root {
+  --indigo-50: #eef2ff;
+  --indigo-100: #e0e7ff;
+  --indigo-400: #818cf8;
+  --indigo-500: #6366f1;
+  --indigo-600: #4f46e5;
+  --indigo-700: #4338ca;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-900: #111827;
+  --green-50: #f0fdf4;
+  --green-300: #86efac;
+  --red-500: #ef4444;
+  --red-600: #dc2626;
+  --amber-50: #fffbeb;
+  --amber-300: #fcd34d;
+  --amber-600: #d97706;
+  --amber-700: #b45309;
+  --white: #ffffff;
+}
+
+/* ---- Reset y tipografía base ---- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  line-height: 1.6;
+}
+
+/* ---- Estilos para inputs del formulario ---- */
+
+.form-input {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #111827;
+  background-color: #ffffff;
+  border: 2px solid #d1d5db;
+  border-radius: 0.5rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+}
+
+.form-input.input-error {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+}
+
+.form-input::placeholder {
+  color: #9ca3af;
+  opacity: 1;
+}
+
+textarea.form-input {
+  resize: vertical;
+  min-height: 6rem;
+}
+
+select.form-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='%236b7280' d='M4 4 L12 4 L8 8 L4 12 L12 12'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
+  padding-right: 2.5rem;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+/* ---- Checkboxes y radios personalizados ---- */
+
+.form-checkbox,
+.form-radio {
+  width: 1.2rem;
+  height: 1.2rem;
+  border: 2px solid #d1d5db;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.form-checkbox {
+  border-radius: 0.25rem;
+}
+
+.form-radio {
+  border-radius: 50%;
+}
+
+.form-checkbox:checked,
+.form-radio:checked {
+  background-color: #6366f1;
+  border-color: #6366f1;
+}
+
+.form-checkbox:checked {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='white' d='M3 3 L9 3 L9 7 L3 7 M3 5 L7 5 L7 9 L3 9'/%3E%3C/svg%3E");
+  background-size: 0.75rem;
+}
+
+/* ---- Mensajes de error ---- */
+
+.error-message {
+  display: block;
+  font-size: 0.875rem;
+  line-height: 1.25;
+  color: #dc2626;
+}
+
+.error-message.hidden {
+  display: none;
+}
+
+/* ---- Mensajes de advertencia ---- */
+
+.warning-message {
+  display: block;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.warning-message.hidden {
+  display: none;
+}
+
+/* ---- Mensaje de éxito ---- */
+
+#success-message {
+  scroll-margin-top: 2rem;
+}
+
+#success-message.hidden {
+  display: none;
+}
+
+/* ---- Fieldset accesible ---- */
+
+fieldset {
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* ---- Menú móvil ---- */
+
+#mobile-menu.hidden {
+  display: none;
+}
+
+/* ---- Focus visible para accesibilidad ---- */
+
+:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+
+/* ---- Smooth hover en cards ---- */
+
+article,
+.grid > div {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+article:hover,
+.grid > div:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+}
+
+/* ---- Saltos de navegación (accesibilidad) ---- */
+
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #6366f1;
+  color: white;
+  padding: 0.5rem 1rem;
+  z-index: 100;
+  transition: top 0.2s;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* ---- Animación de carga sutil para el submit ---- */
+
+button[type="submit"]:active {
+  transform: scale(0.98);
+}
+
+button[type="submit"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---- Contador de comentarios ---- */
+
+#comentarios-count {
+  transition: color 0.2s ease;
+}
+
+#comentarios-count.text-amber-600 {
+  color: #d97706;
+}
+
+/* ---- Ajustes responsive para móviles muy pequeños ---- */
+
+@media (max-width: 480px) {
+  .form-input {
+    padding: 0.625rem 0.75rem;
+    font-size: 0.9375rem;
+  }
+
+  .grid.md\:grid-cols-2,
+  .grid.md\:grid-cols-3,
+  .grid.lg\:grid-cols-4 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---- Print styles ---- */
+
+@media print {
+  header,
+  footer,
+  .skip-link {
+    display: none;
+  }
+
+  body {
+    font-size: 12pt;
+    color: #000;
+    background: #fff;
+  }
+}
+
+/* ---- Clase de utilidad para bordes superiores en cards ---- */
+
+.border-t-4 {
+  border-top-width: 4px;
+  border-top-style: solid;
+}
+
+.border-l-4 {
+  border-left-width: 4px;
+  border-left-style: solid;
+}
