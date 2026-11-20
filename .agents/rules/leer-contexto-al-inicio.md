@@ -8,6 +8,7 @@ description: >
 # Rule: Leer contexto antes de actuar
 
 ## Alcance
+
 Esta regla aplica **siempre** al inicio de cada sesión, sin importar el archivo o tarea.
 
 ## Comportamiento esperado
@@ -23,13 +24,16 @@ Esta regla aplica **siempre** al inicio de cada sesión, sin importar el archivo
 3. Si alguno de estos archivos no existe o no es accesible, el agente DEBE detenerse y notificar al desarrollador antes de continuar.
 
 ## Justificación
+
 TrackFlow es un monorepo con múltiples hitos, restricciones técnicas y decisiones de arquitectura documentadas. Saltarse la lectura del contexto puede llevar a:
+
 - Modificar archivos protegidos sin autorización
 - Introducir dependencias no permitidas
 - Desalinearse con los requisitos del BRIEFING.md
 - Duplicar trabajo ya completado en hitos anteriores
 
 ## Consecuencias de no cumplir la regla
+
 - Riesgo de corrupción del código de producto (uis/, services/, src/)
 - Inconsistencias en la documentación del proyecto
 - Pérdida de tiempo en trabajo redundante o incorrecto

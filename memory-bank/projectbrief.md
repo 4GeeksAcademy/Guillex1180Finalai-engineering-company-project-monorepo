@@ -17,11 +17,11 @@ Las marcas de e-commerce necesitan externalizar su logística para escalar sin i
 
 ## Stakeholders
 
-| Persona | Rol | Área |
-|---------|-----|------|
-| Andrés Kim | CTO | TrackFlow Tech |
-| Miguel Torres | Director Comercial | Comercial |
-| Ana Whitfield | Head of Warehouse Operations | Operaciones |
+| Persona       | Rol                          | Área           |
+| ------------- | ---------------------------- | -------------- |
+| Andrés Kim    | CTO                          | TrackFlow Tech |
+| Miguel Torres | Director Comercial           | Comercial      |
+| Ana Whitfield | Head of Warehouse Operations | Operaciones    |
 
 ## Decisiones clave
 

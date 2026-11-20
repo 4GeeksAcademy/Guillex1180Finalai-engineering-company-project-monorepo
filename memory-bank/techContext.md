@@ -2,14 +2,14 @@
 
 ## Stack tecnológico
 
-| Capa | Tecnología | Versión |
-|------|-----------|---------|
-| Frontend web | Next.js | ^14.2.0 |
-| UI Runtime | React | ^18.3.0 |
-| Lenguaje | TypeScript | ^5.6.0 |
-| Estilos | Tailwind CSS | ^3.4.12 |
-| Node.js | Runtime | 20.x |
-| Package manager | npm | — |
+| Capa            | Tecnología   | Versión |
+| --------------- | ------------ | ------- |
+| Frontend web    | Next.js      | ^14.2.0 |
+| UI Runtime      | React        | ^18.3.0 |
+| Lenguaje        | TypeScript   | ^5.6.0  |
+| Estilos         | Tailwind CSS | ^3.4.12 |
+| Node.js         | Runtime      | 20.x    |
+| Package manager | npm          | —       |
 
 ## Dependencias permitidas (frontend)
 

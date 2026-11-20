@@ -16,19 +16,20 @@ outputs:
 # Lead Qualification Skill
 
 ## Objetivo
+
 Evaluar la calidad de los leads entrantes del formulario web de TrackFlow y determinar si deben ser derivados al equipo comercial.
 
 ## Inputs esperados
 
-| Campo | Tipo | Requerido | Descripción |
-|-------|------|-----------|-------------|
-| name | string | Sí | Nombre completo del contacto |
-| email | string | Sí | Correo electrónico |
-| phone | string | No | Teléfono de contacto |
-| company | string | Sí | Nombre de la empresa |
-| role | string | No | Cargo del contacto |
-| employees | number | Sí | Número de empleados (para filtrar tamaño) |
-| message | string | No | Mensaje o consulta adicional |
+| Campo     | Tipo   | Requerido | Descripción                        |
+| --------- | ------ | --------- | ---------------------------------- |
+| name      | string | Sí        | Nombre completo del contacto       |
+| email     | string | Sí        | Correo electrónico                 |
+| phone     | string | No        | Teléfono de contacto               |
+| company   | string | Sí        | Nombre de la empresa               |
+| role      | string | No        | Cargo del contacto                 |
+| employees | number | Sí        | Número de empleados (para filtrar) |
+| message   | string | No        | Mensaje o consulta adicional       |
 
 ## Criterios de cualificación
 
@@ -50,14 +51,14 @@ Un lead se considera **cualificado** si cumple TODOS estos criterios:
 ## Ejemplo de uso
 
 ```typescript
-import { qualifyLead } from './lead-qualification';
+import { qualifyLead } from "./lead-qualification";
 
 const result = qualifyLead({
-  name: 'María García',
-  email: 'maria@logistika.com',
-  company: 'Logistika S.L.',
+  name: "María García",
+  email: "maria@logistika.com",
+  company: "Logistika S.L.",
   employees: 45,
-  message: 'Buscamos socio logístico para e-commerce en España'
+  message: "Buscamos socio logístico para e-commerce en España",
 });
 
 // result: { qualified: true, score: 100, reasons: [] }

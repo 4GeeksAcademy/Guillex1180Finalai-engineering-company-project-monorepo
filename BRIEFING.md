@@ -33,52 +33,59 @@ Trabajas en la unidad **TrackFlow Tech**, reportando directamente al CTO Andrés
 Tu landing page debe incluir las siguientes secciones, en este orden:
 
 ### Header
+
 - Logo o nombre "TrackFlow"
 - Navegación: Inicio | Servicios | Cobertura | Contacto
 
 ### Hero
+
 - **Titular:** "Logística que escala con tu e-commerce"
 - **Subtítulo:** "Gestión de almacenes, entregas de última milla y logística inversa en Estados Unidos y España. Más de 15 años ayudando a marcas de moda, electrónica y cosmética a crecer sin preocuparse por la operación."
 - **Call to action:** Botón "Solicitar información" que enlace al formulario
 
 ### Servicios (3 columnas)
+
 1. **Gestión de Almacenes** — Almacenamiento, picking y packing, inventario en tiempo real, operamos almacenes en Los Ángeles y Zaragoza
 2. **Entregas de Última Milla** — Red de carriers certificados en ambos países, seguimiento unificado de envíos, gestión de incidencias y devoluciones
 3. **Logística Inversa** — Gestión completa de devoluciones, inspección y reacondicionamiento, integración con tu plataforma de ventas
 
 ### Cobertura (2 columnas)
+
 - **Estados Unidos:** Almacén en Los Ángeles, cobertura nacional, carriers: UPS, FedEx, DHL
 - **España:** Almacén en Zaragoza, cobertura peninsular e islas, carriers: MRW, SEUR, DHL
 
 ### Por qué TrackFlow (4 beneficios)
+
 - Operación binacional | +130 profesionales | Tecnología propia | Especialización e-commerce
 
 ### Contacto
+
 - comercial@trackflow.com
 - Los Ángeles: +1 213 555 0147
 - Zaragoza: +34 976 123 456
 
 ### Footer
+
 - © 2025 TrackFlow. Todos los derechos reservados.
 
 ---
 
 ## Campos del formulario de solicitud de información
 
-| Campo | Tipo | Obligatorio |
-|-------|------|:-----------:|
-| Nombre de la empresa | text | Sí |
-| Persona de contacto | text | Sí |
-| Email corporativo | email | Sí |
-| Teléfono | tel | Sí |
-| Sitio web de la empresa | url | No |
-| País de operación principal | select | Sí |
-| Tipo de producto | select | Sí |
-| Volumen mensual estimado de envíos | select | Sí |
-| Servicios de interés | checkbox | Sí |
-| ¿Actualmente trabajas con otro 3PL? | radio | Sí |
-| Comentarios o necesidades específicas | textarea | No |
-| Acepto política de privacidad | checkbox | Sí |
+| Campo                                 | Tipo     | Obligatorio |
+| ------------------------------------- | -------- | :---------: |
+| Nombre de la empresa                  | text     |     Sí      |
+| Persona de contacto                   | text     |     Sí      |
+| Email corporativo                     | email    |     Sí      |
+| Teléfono                              | tel      |     Sí      |
+| Sitio web de la empresa               | url      |     No      |
+| País de operación principal           | select   |     Sí      |
+| Tipo de producto                      | select   |     Sí      |
+| Volumen mensual estimado de envíos    | select   |     Sí      |
+| Servicios de interés                  | checkbox |     Sí      |
+| ¿Actualmente trabajas con otro 3PL?   | radio    |     Sí      |
+| Comentarios o necesidades específicas | textarea |     No      |
+| Acepto política de privacidad         | checkbox |     Sí      |
 
 ---
 

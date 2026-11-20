@@ -28,40 +28,40 @@ La unidad **TrackFlow Tech** es el equipo interno de tecnología que lidera la t
 
 ### Stakeholders clave
 
-| Persona | Rol | Área |
-|---------|-----|------|
-| Andrés Kim | CTO | TrackFlow Tech |
-| Miguel Torres | Director Comercial | Comercial |
+| Persona       | Rol                          | Área                   |
+| ------------- | ---------------------------- | ---------------------- |
+| Andrés Kim    | CTO                          | TrackFlow Tech         |
+| Miguel Torres | Director Comercial           | Comercial              |
 | Ana Whitfield | Head of Warehouse Operations | Operaciones de Almacén |
 
 ---
 
 ## Hitos del proyecto
 
-| Hito | Descripción | Estado |
-|------|-------------|--------|
-| HITO 1 | Sitio web corporativo público con formulario de captación de leads | ✅ Completado en `trackflow-site/` |
-| HITO 2 | Fundamentos de programación (utilidades TypeScript) | ✅ Completado en `src/utils/` |
-| HITO 3 | Talent Pipeline Tracker (gestión de candidaturas) | ✅ Completado en `uis/talent-pipeline-tracker/` |
-| HITO 4 | Infraestructura de agentes (memory bank, reglas, skills) | 🔄 En curso |
+| Hito   | Descripción                                                        | Estado                                          |
+| ------ | ------------------------------------------------------------------ | ----------------------------------------------- |
+| HITO 1 | Sitio web corporativo público con formulario de captación de leads | ✅ Completado en `trackflow-site/`              |
+| HITO 2 | Fundamentos de programación (utilidades TypeScript)                | ✅ Completado en `src/utils/`                   |
+| HITO 3 | Talent Pipeline Tracker (gestión de candidaturas)                  | ✅ Completado en `uis/talent-pipeline-tracker/` |
+| HITO 4 | Infraestructura de agentes (memory bank, reglas, skills)           | ✅ Completado en `feature/agent-memory-bank`    |
 
 ---
 
 ## Estructura del monorepo
 
-| Ruta | Propósito |
-|------|-----------|
-| `uis/` | Proyectos frontend de la empresa |
-| `uis/website/` | Web corporativa pública (ruta `/`, marca y copy alineados con BRIEFING.md) |
-| `uis/backoffice/` | App interna de administración (layout propio, separado del sitio público) |
-| `services/` | APIs y servicios backend |
-| `agents/` | Agentes e integraciones de IA para la empresa (módulos posteriores) |
-| `skills/` | Skills reutilizables del flujo de trabajo de la empresa |
-| `memory-bank/` | Banco de memoria del proyecto (contexto activo para agentes de IA) |
-| `.agents/` | Configuración de agentes de código: reglas y skills de desarrollo |
-| `src/` | Código compartido (utilidades, tipos, validaciones) |
-| `packages/shared/` | Paquetes compartidos entre proyectos |
-| `trackflow-site/` | Sitio web público de TrackFlow (HITO 1) |
+| Ruta               | Propósito                                                                  |
+| ------------------ | -------------------------------------------------------------------------- |
+| `uis/`             | Proyectos frontend de la empresa                                           |
+| `uis/website/`     | Web corporativa pública (ruta `/`, marca y copy alineados con BRIEFING.md) |
+| `uis/backoffice/`  | App interna de administración (layout propio, separado del sitio público)  |
+| `services/`        | APIs y servicios backend                                                   |
+| `agents/`          | Agentes e integraciones de IA para la empresa (módulos posteriores)        |
+| `skills/`          | Skills reutilizables del flujo de trabajo de la empresa                    |
+| `memory-bank/`     | Banco de memoria del proyecto (contexto activo para agentes de IA)         |
+| `.agents/`         | Configuración de agentes de código: reglas y skills de desarrollo          |
+| `src/`             | Código compartido (utilidades, tipos, validaciones)                        |
+| `packages/shared/` | Paquetes compartidos entre proyectos                                       |
+| `trackflow-site/`  | Sitio web público de TrackFlow (HITO 1)                                    |
 
 ---
 

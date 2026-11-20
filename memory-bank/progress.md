@@ -2,12 +2,12 @@
 
 ## Estado actual del desarrollo
 
-| Hito | Descripción | Estado | Rama |
-|------|-------------|--------|------|
+| Hito   | Descripción                                                        | Estado        | Rama                        |
+| ------ | ------------------------------------------------------------------ | ------------- | --------------------------- |
 | HITO 1 | Sitio web corporativo público con formulario de captación de leads | ✅ Completado | `feature/corporate-website` |
-| HITO 2 | Fundamentos de programación — utilidades TypeScript | ✅ Completado | `feature/fundamentals` |
-| HITO 3 | Talent Pipeline Tracker — gestión de candidaturas | ✅ Completado | `feature/domain-models` |
-| HITO 4 | Infraestructura de agentes — memory bank, reglas, skills | 🔄 En curso | `feature/agent-memory-bank` |
+| HITO 2 | Fundamentos de programación — utilidades TypeScript                | ✅ Completado | `feature/fundamentals`      |
+| HITO 3 | Talent Pipeline Tracker — gestión de candidaturas                  | ✅ Completado | `feature/domain-models`     |
+| HITO 4 | Infraestructura de agentes — memory bank, reglas, skills           | ✅ Completado | `feature/agent-memory-bank` |
 
 ## HITO 1 — Sitio web corporativo
 
@@ -39,19 +39,18 @@
 
 ## HITO 4 — Infraestructura de agentes
 
-- ✅ `BRIEFING.md` creado en la raíz
+- ✅ `BRIEFING.md` creado en la raíz con briefing real de TrackFlow
 - ✅ `CONTEXT.es.md` actualizado con información real de TrackFlow
-- ✅ `memory-bank/projectbrief.md` creado
-- ✅ `memory-bank/techContext.md` creado
-- ✅ `memory-bank/progress.md` creado
-- ⬜ `AGENTS.md` pendiente
-- ⬜ `.agents/rules/` pendiente
-- ⬜ `.agents/skills/` pendiente
+- ✅ `memory-bank/projectbrief.md` creado con descripción del negocio y objetivos
+- ✅ `memory-bank/techContext.md` creado con stack, arquitectura y restricciones
+- ✅ `memory-bank/progress.md` creado con estado de desarrollo
+- ✅ `AGENTS.md` creado con protocolo de operación (6 archivos a leer, flujo 5 pasos pre-commit, carpetas protegidas)
+- ✅ `.agents/rules/leer-contexto-al-inicio.md` con scope `always`
+- ✅ `.agents/skills/lead-qualification/SKILL.md` con objetivo único, inputs y acceptance criteria
+- ✅ Rama `feature/agent-memory-bank` creada y código commiteado
+- ✅ PR #1 abierto contra `main`
 
 ## Próximos pasos
 
-1. Completar `AGENTS.md` con flujo pre-commit y carpetas protegidas
-2. Crear al menos una regla en `.agents/rules/`
-3. Crear al menos una skill en `.agents/skills/`
-4. Cambiar a branch `feature/agent-memory-bank`
-5. Commit y Pull Request a `main`
+1. Merge del PR #1 a `main`
+2. Continuar con hitos posteriores del proyecto
