@@ -48,6 +48,12 @@
 - ✅ `.agents/rules/leer-contexto-al-inicio.md` con scope `always`
 - ✅ `.agents/skills/lead-qualification/SKILL.md` con objetivo único, inputs y acceptance criteria
 - ✅ Rama `feature/agent-memory-bank` creada y código commiteado
+- ✅ PR #1 fusionada a `main` (squash merge)
+
+## Próximos pasos
+
+- Continuar con HITO 5 según la hoja de ruta del proyecto
+- Sincronizar ramas derivadas con los cambios de `main`
 - ✅ PR #1 abierto contra `main`
 
 ## Próximos pasos
