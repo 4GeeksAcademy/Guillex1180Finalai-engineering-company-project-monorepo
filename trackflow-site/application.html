@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<!--
+  ============================================================
+  TrackFlow — Solicitud de Información (Application Page)
+  Coherente visualmente con index.html (Tailwind, WCAG, Mobile‑First)
+  ============================================================ -->
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- SEO -->
+  <title>TrackFlow — Solicitar información | Logística para e‑commerce</title>
+  <meta name="description" content="Solicita información sobre los servicios logísticos de TrackFlow para tu e-commerce: almacenes, última milla y logística inversa en EE.UU. y España." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://trackflow.com/solicitar-informacion" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="TrackFlow — Solicita información" />
+  <meta property="og:description" content="Completa el formulario y recibe una propuesta personalizada de nuestros servicios logísticos." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://trackflow.com/solicitar-informacion" />
+  <meta property="og:site_name" content="TrackFlow" />
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Estilos adicionales inline (lo que Tailwind no cubre) -->
+  <style>
+    /* ── Skip-link ── */
+    .skip-link { position: absolute; top: -100%; left: 0.5rem; background: #4f46e5; color: #fff; padding: 0.5rem 1.25rem; border-radius: 0 0 0.5rem 0.5rem; z-index: 9999; transition: top 0.18s ease-in; }
+    .skip-link:focus { top: 0.25rem; }
+
+    /* ── Estados de validación (equivalentes a Tailwind @apply) ── */
+    .field-error { display: none; font-size: 0.875rem; line-height: 1.25rem; color: #dc2626; margin-top: 0.375rem; }
+    .field-error.visible { display: block; }
+    .field-warning { display: none; font-size: 0.875rem; line-height: 1.25rem; color: #d97706; margin-top: 0.5rem; }
+    .field-warning.visible { display: block; }
+    .input-error { border-color: #ef4444 !important; box-shadow: 0 0 0 2px rgba(239,68,68,0.3); }
+    .input-valid { border-color: #22c55e !important; box-shadow: 0 0 0 2px rgba(34,197,94,0.3); }
+
+    /* ── Animación shake para errores en submit ── */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      10%, 50%, 90% { transform: translateX(-6px); }
+      30%, 70% { transform: translateX(6px); }
+    }
+    .shake { animation: shake 0.45s ease-in-out; }
+
+    /* ── Transiciones hover ── */
+    .card-hover { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .card-hover:hover { transform: translateY(-3px); box-shadow: 0 12px 30px -8px rgba(0,0,0,0.08); }
+
+    /* ── Placeholder selects ── */
+    select option[value=""] { color: #9ca3af; }
+
+    /* ── Checkbox/Radio estado marcado ── */
+    input[type="checkbox"].appearance-none:checked { background: #4f46e5 !important; border-color: #4f46e5 !important; }
+    input[type="radio"].appearance-none:checked { background: #4f46e5 !important; border-color: #4f46e5 !important; box-shadow: inset 0 0 0 3px #fff !important; }
+
+    /* ── Scroll suave con respeto a prefers-reduced-motion ── */
+    html { scroll-behavior: smooth; }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .card-hover { transition: none; } }
+  </style>
+</head>
+
+<body class="bg-gray-50 text-gray-900 antialiased">
+
+  <!-- Skip link -->
+  <a href="#main-content" class="skip-link focus:top-2">Saltar al contenido principal</a>
+
+  <!-- ============================================================
+    HEADER (idéntico visualmente a index.html)
+    ============================================================ -->
+  <header role="banner" class="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between py-3 lg:py-4">
+
+        <!-- Logo -->
+        <a href="index.html" class="flex items-center gap-2 text-indigo-700 hover:text-indigo-600 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400 rounded-md" aria-label="TrackFlow — Volver al inicio">
+          <svg class="w-8 h-8 text-indigo-600" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <rect x="4" y="4" width="24" height="18" rx="3"/>
+            <line x1="10" y1="10" x2="22" y2="10" stroke-width="1.5"/>
+            <line x1="8" y1="16" x2="24" y2="16" stroke-width="1.5"/>
+          </svg>
+          <span class="text-xl md:text-2xl font-extrabold tracking-tight">TrackFlow</span>
+        </a>
+
+        <!-- Navegación escritorio -->
+        <nav aria-label="Navegación principal" class="hidden md:flex items-center gap-6 lg:gap-8">
+          <a href="index.html" class="text-sm lg:text-base font-medium text-gray-600 hover:text-indigo-600 transition-colors rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-400">Inicio</a>
+          <a href="index.html#servicios" class="text-sm lg:text-base font-medium text-gray-600 hover:text-indigo-600 transition-colors rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-400">Servicios</a>
+          <a href="index.html#cobertura" class="text-sm lg:text-base font-medium text-gray-600 hover:text-indigo-600 transition-colors rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-400">Cobertura</a>
+          <a href="index.html#por-que" class="text-sm lg:text-base font-medium text-gray-600 hover:text-indigo-600 transition-colors rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-400">Por qué TrackFlow</a>
+        </nav>
+
+        <!-- Botón menú móvil -->
+        <button id="menu-toggle" type="button" class="md:hidden relative p-2.5 rounded-lg text-gray-600 hover:text-indigo-600 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400" aria-label="Abrir menú de navegación" aria-expanded="false" aria-controls="mobile-menu">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+            <line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Menú móvil desplegable -->
+    <div id="mobile-menu" role="navigation" aria-label="Navegación móvil" class="hidden md:hidden border-b border-gray-200 bg-white shadow-inner">
+      <div class="max-w-7xl mx-auto px-4 py-4 space-y-3">
+        <a href="index.html" class="block py-2 text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 font-medium rounded-md px-3 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400">Inicio</a>
+        <a href="index.html#servicios" class="block py-2 text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 font-medium rounded-md px-3 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400">Servicios</a>
+        <a href="index.html#cobertura" class="block py-2 text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 font-medium rounded-md px-3 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400">Cobertura</a>
+        <a href="index.html#por-que" class="block py-2 text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 font-medium rounded-md px-3 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400">Por qué TrackFlow</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============================================================
+    MAIN
+    ============================================================ -->
+  <main id="main-content" role="main" class="py-12 md:py-16 lg:py-20">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+
+      <!-- Encabezado -->
+      <header class="text-center mb-10">
+        <span class="inline-block text-xs md:text-sm font-semibold uppercase tracking-widest text-indigo-500 bg-indigo-100 px-4 py-1.5 rounded-full mb-3">Contacto</span>
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Solicita información</h1>
+        <p class="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">Cuéntanos sobre tu empresa y recibe una propuesta personalizada de nuestros servicios logísticos.</p>
+      </header>
+
+      <!-- ============================================================
+        FORMULARIO
+        ============================================================ -->
+      <form id="application-form" novalidate class="bg-white rounded-2xl shadow-lg p-8 md:p-10 space-y-6">
+
+        <!-- ===== SECCIÓN 1: DATOS DE LA EMPRESA ===== -->
+        <fieldset class="border-0">
+          <legend class="block w-full text-xl font-bold text-gray-900 border-b-2 border-indigo-200 pb-2 mb-6">Datos de la empresa</legend>
+
+          <!-- 1. Nombre de la empresa -->
+          <div>
+            <label for="empresa" class="block font-semibold text-gray-800 mb-1.5">Nombre de la empresa <span class="text-red-500" aria-label="obligatorio">*</span></label>
+            <input type="text" id="empresa" name="empresa" class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 transition-all duration-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 outline-none" placeholder="Ej: Mi Tienda Online S.L." minlength="2" required aria-required="true" />
+            <p class="field-error hidden" id="empresa-error" role="alert">El nombre de la empresa debe tener al menos 2 caracteres</p>
+          </div>
+
+          <!-- 2. Persona de contacto -->
+          <div>
+            <label for="contacto" class="block font-semibold text-gray-800 mb-1.5">Persona de contacto <span class="text-red-500" aria-label="obligatorio">*</span></label>
+            <input type="text" id="contacto" name="contacto" class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 transition-all duration-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 outline-none" placeholder="Ej: Ana García López" required aria-required="true" />
+            <p class="field-error hidden" id="contacto-error" role="alert">Ingresa nombre y apellido del contacto</p>
+          </div>
+
+          <!-- 3. Email corporativo -->
+          <div>
+            <label for="email" class="block font-semibold text-gray-800 mb-1.5">Email corporativo <span class="text-red-500" aria-label="obligatorio">*</span></label>
+            <input type="email" id="email" name="email" class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 transition-all duration-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 outline-none" placeholder="Ej: nombre@miempresa.com" required aria-required="true" />
+            <p class="field-error hidden" id="email-error" role="alert">Ingresa un email corporativo válido (ejemplo: nombre@empresa.com)</p>
+          </div>
+
+          <!-- 4. Teléfono -->
+          <div>
+            <label for="telefono" class="block font-semibold text-gray-800 mb-1.5">Teléfono <span class="text-red-500" aria-label="obligatorio">*</span></label>
+            <input type="tel" id="telefono" name="telefono" class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 transition-all duration-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 outline-none" placeholder="Ej: +1 213 555 0147" required aria-required="true" />
+            <p class="field-error hidden" id="telefono-error" role="alert">El teléfono debe incluir código de país (ejemplo: +1 213 555 0147)</p>
+          </div>
+
+          <!-- 5. Sitio web (opcional) -->
+          <div>
+            <label for="sitio-web" class="block font-semibold text-gray-800 mb-1.5">Sitio web de la empresa <span class="text-gray-400 text-sm">(opcional)</span></label>
+            <input type="url" id="sitio-web" name="sitio-web" class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 transition-all duration-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 outline-none" placeholder="Ej: https://mitienda.com" />
+            <p class="field-error hidden" id="sitio-web-error" role="alert">Si incluyes sitio web, debe ser una URL válida</p>
+          </div>
+        </fieldset>
+
+        <!-- ===== SECCIÓN 2: OPERACIÓN ===== -->
+        <fieldset class="border-0">
+          <legend class="block w-full text-xl font-bold text-gray-900 border-b-2 border-indigo-200 pb-2 mb-6">Detalles de operación</legend>
+
+          <!-- 6. País de operación principal -->
+          <div>
+            <label for="pais" class="block font-semibold text-gray-800 mb-1.5">País de operación principal <span class="text-red-500" aria-label="obligatorio">*</span></label>
+            <select id="pais" name="pais" class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 transition-all duration-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 outline-none" required aria-required="true">
+              <option value="">Selecciona un país</option>
+              <option value="Estados Unidos">Estados Unidos</option>
+              <option value="España">España</option>
+              <option value="Ambos">Ambos</option>
+              <option value="Otro">Otro</option>
+            </select>
+            <p class="field-error hidden" id="pais-error" role="alert">Selecciona el país de operación principal</p>
+          </div>
+
+          <!-- 7. Tipo de producto -->
+          <div>
+            <label for="tipo-producto" class="block font-semibold text-gray-800 mb-1.5">Tipo de producto <span class="text-red-500" aria-label="obligatorio">*</span></label>
+            <select id="tipo-producto" name="tipo-producto" class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 transition-all duration-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 outline-none" required aria-required="true">
+              <option value="">Selecciona un tipo</option>
+              <option value="Moda">Moda</option>
+              <option value="Electrónica">Electrónica</option>
+              <option value="Cosmética">Cosmética</option>
+              <option value="Alimentación">Alimentación</option>
+              <option value="Otro">Otro</option>
+            </select>
+            <p class="field-error hidden" id="tipo-producto-error" role="alert">Selecciona el tipo de producto que manejas</p>
+          </div>
+
+          <!-- 8. Volumen mensual estimado de envíos -->
+          <div>
+            <label for="volumen" class="block font-semibold text-gray-800 mb-1.5">Volumen mensual estimado de envíos <span class="text-red-500" aria-label="obligatorio">*</span></label>
+            <select id="volumen" name="volumen" class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 transition-all duration-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 outline-none" required aria-required="true">
+              <option value="">Selecciona un volumen</option>
+              <option value="0-100">0‑100 envíos/mes</option>
+              <option value="101-500">101‑500 envíos/mes</option>
+              <option value="501-2000">501‑2000 envíos/mes</option>
+              <option value="2000+">Más de 2000 envíos/mes</option>
+              <option value="No estoy seguro">No estoy seguro</option>
+            </select>
+            <p class="field-error hidden" id="volumen-error" role="alert">Selecciona el volumen mensual estimado</p>
+            <p class="field-warning hidden" id="volumen-warning" role="alert">⚠️ Para volúmenes menores a 100 envíos mensuales, nuestros servicios podrían no ser la solución más eficiente. ¿Seguro que quieres continuar?</p>
+          </div>
+
+          <!-- 9. Servicios de interés (checkbox) -->
+          <fieldset>
+            <legend class="block font-semibold text-gray-800 mb-1.5">Servicios de interés <span class="text-red-500" aria-label="obligatorio">*</span></legend>
+            <p class="text-sm text-gray-500 mb-2">Selecciona al menos uno:</p>
+            <div class="flex flex-wrap gap-3">
+              <label class="inline-flex items-center gap-2 bg-gray-100 hover:bg-indigo-100 px-4 py-2 rounded-full cursor-pointer transition-colors"><input type="checkbox" name="servicios" value="Almacenaje" class="appearance-none w-5 h-5 border-2 border-gray-300 rounded cursor-pointer transition-all" /><span class="text-sm font-medium text-gray-700">Almacenaje</span></label>
+              <label class="inline-flex items-center gap-2 bg-gray-100 hover:bg-indigo-100 px-4 py-2 rounded-full cursor-pointer transition-colors"><input type="checkbox" name="servicios" value="Última milla" class="appearance-none w-5 h-5 border-2 border-gray-300 rounded cursor-pointer transition-all" /><span class="text-sm font-medium text-gray-700">Última milla</span></label>
+              <label class="inline-flex items-center gap-2 bg-gray-100 hover:bg-indigo-100 px-4 py-2 rounded-full cursor-pointer transition-colors"><input type="checkbox" name="servicios" value="Logística inversa" class="appearance-none w-5 h-5 border-2 border-gray-300 rounded cursor-pointer transition-all" /><span class="text-sm font-medium text-gray-700">Logística inversa</span></label>
+            </div>
+            <p class="field-error hidden" id="servicios-error" role="alert">Selecciona al menos un servicio de interés</p>
+          </fieldset>
+
+          <!-- 10. ¿Actualmente trabajas con otro 3PL? (radio) -->
+          <fieldset>
+            <legend class="block font-semibold text-gray-800 mb-1.5">¿Actualmente trabajas con otro 3PL? <span class="text-red-500" aria-label="obligatorio">*</span></legend>
+            <div class="flex flex-wrap gap-4 mt-1">
+              <label class="inline-flex items-center gap-2 cursor-pointer"><input type="radio" name="3pl" value="Sí" class="appearance-none w-5 h-5 border-2 border-gray-300 rounded-full cursor-pointer transition-all" required aria-required="true" /><span class="text-sm text-gray-700">Sí</span></label>
+              <label class="inline-flex items-center gap-2 cursor-pointer"><input type="radio" name="3pl" value="No" class="appearance-none w-5 h-5 border-2 border-gray-300 rounded-full cursor-pointer transition-all" /><span class="text-sm text-gray-700">No</span></label>
+              <label class="inline-flex items-center gap-2 cursor-pointer"><input type="radio" name="3pl" value="Estoy evaluando opciones" class="appearance-none w-5 h-5 border-2 border-gray-300 rounded-full cursor-pointer transition-all" /><span class="text-sm text-gray-700">Estoy evaluando opciones</span></label>
+            </div>
+            <p class="field-error hidden" id="3pl-error" role="alert">Indica si actualmente trabajas con otro proveedor logístico</p>
+          </fieldset>
+        </fieldset>
+
+        <!-- ===== SECCIÓN 3: INFORMACIÓN ADICIONAL ===== -->
+        <fieldset class="border-0">
+          <legend class="block w-full text-xl font-bold text-gray-900 border-b-2 border-indigo-200 pb-2 mb-6">Información adicional</legend>
+
+          <!-- 11. Comentarios o necesidades específicas (textarea) -->
+          <div>
+            <label for="comentarios" class="block font-semibold text-gray-800 mb-1.5">Comentarios o necesidades específicas <span class="text-gray-400 text-sm">(opcional, máx. 500 caracteres)</span></label>
+            <textarea id="comentarios" name="comentarios" class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 transition-all duration-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 outline-none" rows="4" maxlength="500" placeholder="Cuéntanos más sobre tus necesidades logísticas..." style="min-height:7rem;resize:vertical"></textarea>
+            <div class="flex justify-between items-center mt-1.5">
+              <p class="field-error hidden" id="comentarios-error" role="alert">Los comentarios no pueden exceder 500 caracteres</p>
+              <p class="text-xs text-gray-400 ml-auto" aria-live="polite"><span id="comentarios-count">0</span> / 500</p>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- ===== SECCIÓN 4: PRIVACIDAD Y ENVÍO ===== -->
+        <fieldset class="border-0">
+          <legend class="block w-full text-xl font-bold text-gray-900 border-b-2 border-indigo-200 pb-2 mb-6">Privacidad</legend>
+
+          <!-- 12. Acepto política de privacidad -->
+          <div>
+            <label class="inline-flex items-start gap-2 cursor-pointer">
+              <input type="checkbox" id="privacidad" name="privacidad" class="appearance-none w-5 h-5 border-2 border-gray-300 rounded cursor-pointer transition-all" required aria-required="true" />
+              <span class="text-sm text-gray-700">He leído y acepto la <a href="#" class="text-indigo-600 hover:underline rounded-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">política de privacidad</a> <span class="text-red-500" aria-label="obligatorio">*</span></span>
+            </label>
+            <p class="field-error hidden" id="privacidad-error" role="alert">Debes aceptar la política de privacidad para continuar</p>
+          </div>
+        </fieldset>
+
+        <!-- Botones de acción -->
+        <div class="flex flex-col sm:flex-row gap-4 pt-4 items-stretch">
+          <button type="submit" class="w-full sm:w-auto flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-lg px-8 py-4 rounded-xl shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2" aria-label="Enviar solicitud de información">Enviar solicitud</button>
+          <button type="reset" class="w-full sm:w-auto flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold text-lg px-8 py-4 rounded-xl transition-all focus:outline-none focus:ring-2 focus:ring-gray-400">Limpiar formulario</button>
+        </div>
+
+        <p class="text-xs text-gray-400 text-center"><span class="text-red-500">*</span> Campos obligatorios</p>
+      </form>
+
+      <!-- ============================================================
+        MENSAJE DE ÉXITO (oculto por defecto)
+        ============================================================ -->
+      <div id="success-message" class="hidden bg-green-50 border border-green-300 rounded-2xl shadow-lg p-8 md:p-10 mt-8 text-center" role="status" aria-live="polite" tabindex="-1">
+        <div class="text-5xl mb-4" aria-hidden="true">🎉</div>
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">¡Gracias por tu interés en TrackFlow!</h2>
+        <p class="text-lg text-gray-700 leading-relaxed mb-6">Hemos recibido tu solicitud. Nuestro equipo comercial revisará tu información y te contactará en las próximas <strong>24–48 horas</strong> para agendar una llamada y conocer tus necesidades logísticas en detalle.</p>
+        <p class="text-gray-600">Si tienes alguna consulta urgente, escríbenos directamente a <a href="mailto:comercial@trackflow.com" class="text-indigo-600 hover:underline font-medium focus:outline-none focus:ring-2 focus:ring-indigo-400">comercial@trackflow.com</a></p>
+        <div class="mt-8 flex flex-col sm:flex-row gap-4 items-center justify-center">
+          <a href="index.html" class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-8 py-3 rounded-xl transition-all focus:outline-none focus:ring-2 focus:ring-indigo-400">Volver a la página principal</a>
+          <button type="button" id="reset-after-success" class="inline-block bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold px-8 py-3 rounded-xl transition-all focus:outline-none focus:ring-2 focus:ring-gray-400">Enviar otra solicitud</button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ============================================================
+    FOOTER (idéntico visualmente a index.html pero simplificado)
+    ============================================================ -->
+  <footer role="contentinfo" class="bg-gray-900 text-gray-300 py-12 md:py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid md:grid-cols-3 gap-8">
+        <div>
+          <span class="text-xl font-bold text-white tracking-tight">TrackFlow</span>
+          <p class="mt-3 text-sm leading-relaxed text-gray-400">Gestión de almacenes, entregas de última milla y logística inversa para e‑commerce en Estados Unidos y España.</p>
+        </div>
+        <div>
+          <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-400 mb-4">Contacto</h3>
+          <ul class="space-y-2 text-sm">
+            <li><span class="text-gray-500" aria-hidden="true">✉️</span> <a href="mailto:comercial@trackflow.com" class="text-gray-300 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500">comercial@trackflow.com</a></li>
+            <li><span class="text-gray-500" aria-hidden="true">🇺🇸</span> <a href="tel:+12135550147" class="text-gray-300 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500">+1 213 555 0147</a> <span class="text-gray-500 text-xs">— Los Ángeles</span></li>
+            <li><span class="text-gray-500" aria-hidden="true">🇪🇸</span> <a href="tel:+34976123456" class="text-gray-300 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500">+34 976 123 456</a> <span class="text-gray-500 text-xs">— Zaragoza</span></li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-400 mb-4">Síguenos</h3>
+          <ul class="space-y-3">
+            <li><a href="https://linkedin.com/company/trackflow" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 text-gray-300 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500" aria-label="TrackFlow en LinkedIn (se abre en nueva ventana)"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="3"/><text x="7" y="17" font-size="14" font-weight="bold">in</text></svg> LinkedIn</a></li>
+          </ul>
+          <a href="index.html" class="inline-block mt-6 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-indigo-400">Volver al inicio</a>
+        </div>
+      </div>
+      <hr class="border-gray-700 mt-10 mb-6" />
+      <div class="flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-gray-500">
+        <p>&copy; 2025 TrackFlow. Todos los derechos reservados.</p>
+        <nav aria-label="Enlaces legales" class="flex gap-4">
+          <a href="#" class="hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500">Aviso legal</a>
+          <a href="#" class="hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500">Política de privacidad</a>
+          <a href="#" class="hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500">Cookies</a>
+        </nav>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ============================================================
+    SCRIPTS
+    ============================================================ -->
+
+  <!-- Menú móvil y smooth scroll -->
+  <script>
+  (function() {
+    'use strict';
+    var toggle = document.getElementById('menu-toggle');
+    var mobileMenu = document.getElementById('mobile-menu');
+    if (toggle && mobileMenu) {
+      toggle.addEventListener('click', function() {
+        var isHidden = mobileMenu.classList.toggle('hidden');
+        var expanded = !mobileMenu.classList.contains('hidden');
+        toggle.setAttribute('aria-expanded', expanded);
+        toggle.setAttribute('aria-label', expanded ? 'Cerrar menú de navegación' : 'Abrir menú de navegación');
+      });
+    }
+    document.querySelectorAll('a[href^="index.html"]').forEach(function(anchor) {
+      anchor.addEventListener('click', function(e) {
+        if (mobileMenu && !mobileMenu.classList.contains('hidden')) {
+          mobileMenu.classList.add('hidden');
+          toggle.setAttribute('aria-expanded', 'false');
+          toggle.setAttribute('aria-label', 'Abrir menú de navegación');
+        }
+      });
+    });
+  })();
+  </script>
+
+  <!-- Validación del formulario -->
+  <script src="validation.js"></script>
+</body>
+</html>
