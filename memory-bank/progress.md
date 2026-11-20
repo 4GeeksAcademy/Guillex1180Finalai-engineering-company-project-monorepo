@@ -2,12 +2,13 @@
 
 ## Estado actual del desarrollo
 
-| Hito   | Descripción                                                        | Estado        | Rama                        |
-| ------ | ------------------------------------------------------------------ | ------------- | --------------------------- |
-| HITO 1 | Sitio web corporativo público con formulario de captación de leads | ✅ Completado | `feature/corporate-website` |
-| HITO 2 | Fundamentos de programación — utilidades TypeScript                | ✅ Completado | `feature/fundamentals`      |
-| HITO 3 | Talent Pipeline Tracker — gestión de candidaturas                  | ✅ Completado | `feature/domain-models`     |
-| HITO 4 | Infraestructura de agentes — memory bank, reglas, skills           | ✅ Completado | `feature/agent-memory-bank` |
+| Hito   | Descripción                                                          | Estado                                                       | Rama                        |
+| ------ | -------------------------------------------------------------------- | ------------------------------------------------------------ | --------------------------- |
+| HITO 1 | Sitio web corporativo público con formulario de captación de leads   | ✅ Completado                                                | `feature/corporate-website` |
+| HITO 2 | Fundamentos de programación — utilidades TypeScript                  | ✅ Completado                                                | `feature/fundamentals`      |
+| HITO 3 | Talent Pipeline Tracker — gestión de candidaturas                    | ✅ Completado                                                | `feature/domain-models`     |
+| HITO 4 | Infraestructura de agentes — memory bank, reglas, skills             | ✅ Completado                                                | `feature/agent-memory-bank` |
+| HITO 5 | Backoffice de inventario — Next.js, integración con API `/inventory` | 🟡 Implementado; pendiente de backend y validación integrada | `main`                      |
 
 ## HITO 1 — Sitio web corporativo
 
@@ -52,11 +53,17 @@
 
 ## Próximos pasos
 
-- Continuar con HITO 5 según la hoja de ruta del proyecto
+- Completar backend HITO 5 en `services/` y verificar el contrato real de respuesta con el backoffice.
+- Ejecutar `npm install`, `npm run typecheck` y `npm run build` en `uis/backoffice`.
+- Probar las vistas contra una API en ejecución y validar token/autorización en servidor.
 - Sincronizar ramas derivadas con los cambios de `main`
 - ✅ PR #1 abierto contra `main`
 
-## Próximos pasos
+## HITO 5 — Backoffice de inventario
 
-1. Merge del PR #1 a `main`
-2. Continuar con hitos posteriores del proyecto
+- ✅ Creada app Next.js 14/React 18 en `uis/backoffice/`, con Tailwind y documentación de ejecución.
+- ✅ Cliente centralizado para endpoints `/inventory`, bearer token y errores legibles.
+- ✅ Listado de SKUs con stock/almacén y umbrales visuales; formularios de entradas y salidas; historial de solo lectura.
+- ✅ Protección UX basada en token y formulario para configurar token/UUID sin simular autenticación.
+- ⚠️ Backend `services/` y proveedor de auth no existen aún en el repositorio; no se ha probado integración real.
+- ⏳ Pendiente instalar dependencias y correr typecheck/build.
