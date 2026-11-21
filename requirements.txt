@@ -5,3 +5,7 @@ python-dateutil==2.9.0.post0
 s3transfer==0.19.3
 six==1.17.0
 urllib3==2.8.0
+fastapi>=0.115,<1.0
+sqlmodel>=0.0.22,<1.0
+tinydb>=4.8,<5.0
+uvicorn[standard]>=0.30,<1.0

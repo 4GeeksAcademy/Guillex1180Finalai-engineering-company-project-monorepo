@@ -1,2 +1,6 @@
 .venv/
 .env.local
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+data/tinydb.json

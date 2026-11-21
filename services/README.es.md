@@ -6,3 +6,40 @@ Cada subcarpeta dentro de `services/` debe corresponder a **un servicio concreto
 
 - **Propósito principal**: centralizar toda la lógica backend, APIs y consumidores de colas que dan soporte a los casos de uso de la compañía.
 - **Recomendación**: documenta en este archivo (o en sub-READMEs) los servicios que vayas añadiendo, su objetivo, tecnología usada y cómo ejecutarlos.
+
+## Backend de inventario TrackFlow
+
+API FastAPI para los almacenes de Los Ángeles (`LA`) y Zaragoza (`ZGZ`). El ledger SQLModel contiene `SKU`, `StockEntry` y `StockExit`; `current_stock` se calcula a partir de movimientos por SKU y almacén, nunca se persiste. Los tokens y la relación token/operario viven en TinyDB; no existe una tabla SQL de usuarios.
+
+### Preparación local
+
+Desde la raíz del monorepo:
+
+```bash
+python -m pip install -r requirements.txt
+export INVENTORY_DATABASE_URL='sqlite:///./data/trackflow_inventory.db'
+export TINYDB_PATH='./data/tinydb.json'
+export TRACKFLOW_BOOTSTRAP_TOKEN='local-dev-token'
+export TRACKFLOW_BOOTSTRAP_USER_UUID='00000000-0000-4000-8000-000000000001'
+python -m services.seed
+uvicorn services.main:app --reload
+```
+
+Configura el backoffice con `NEXT_PUBLIC_INVENTORY_API_URL=http://localhost:8000` y utiliza `local-dev-token` como token de sesión. El bootstrap solo escribe el hash SHA-256 del token en TinyDB, no el token en claro. Sustituye siempre las credenciales de ejemplo en entornos compartidos.
+
+Opcionalmente define `BACKOFFICE_CORS_ORIGINS` como una lista de orígenes separados por comas. El valor por defecto permite `http://localhost:3000`.
+
+### API
+
+- `GET/POST /inventory/products`
+- `GET /inventory/products/{id}`
+- `POST /inventory/orders/inbound`
+- `POST /inventory/orders/outbound`
+- `GET /inventory/orders`
+- `GET /health`
+
+Las rutas de inventario requieren `Authorization: Bearer <token>` resuelto mediante la tabla `users` de TinyDB. Las entradas requieren `sku_id`, `quantity`, `reference` y `warehouse`; las salidas, `sku_id`, `quantity`, `exit_type`, `tracking_number` y `warehouse`. `user_uuid` se deriva del token autenticado. Las salidas insuficientes responden 400 con el mensaje definido en el briefing; `dispatch` requiere tracking y `loss` exige `tracking_number: null`.
+
+### Datos de desarrollo
+
+`python -m services.seed` crea los seis SKUs de briefing, siete recepciones (incluidas dos del SKU de LA) y cuatro salidas válidas. Es idempotente respecto a referencias y movimientos semilla existentes. La configuración por defecto usa SQLite local en `data/trackflow_inventory.db` y TinyDB en `data/tinydb.json`; ambos archivos son locales y no deben incorporarse a Git.
