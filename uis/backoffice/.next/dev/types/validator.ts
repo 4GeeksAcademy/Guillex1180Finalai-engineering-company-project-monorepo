@@ -41,6 +41,23 @@ type LayoutConfig<Route extends LayoutRoutes = LayoutRoutes> = {
 } & ParamMatchingExports<Route>
 
 
+// Validate ../../../src/app/backoffice/incidents/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/backoffice/incidents">> = Specific
+  const handler = {} as typeof import("../../../src/app/backoffice/incidents/page.js")
+  type __Check = __IsExpected<typeof handler>
+  
+  type __ParamMatchingValue =
+    typeof handler extends { unstable_paramMatching: infer Matcher } ? Matcher :
+    typeof handler extends { unstable_generateParamMatching: (...args: any[]) => infer Matcher } ? Awaited<Matcher> : {}
+  type __InvalidParamMatchingKeys = Exclude<keyof __ParamMatchingValue, keyof ParamMap["/backoffice/incidents"]>
+  type __AssertNoInvalidParamMatchingKeys<Invalid extends never> = Invalid
+  const __paramMatchingKeyCheck: __AssertNoInvalidParamMatchingKeys<__InvalidParamMatchingKeys> | undefined = undefined
+  void __paramMatchingKeyCheck
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../../src/app/backoffice/inventory/orders/inbound/page.tsx
 {
   type __IsExpected<Specific extends AppPageConfig<"/backoffice/inventory/orders/inbound">> = Specific

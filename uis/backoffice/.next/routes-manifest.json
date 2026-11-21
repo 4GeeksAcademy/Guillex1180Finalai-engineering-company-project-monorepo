@@ -18,7 +18,13 @@
   "onMatchHeaders": [],
   "rewrites": {
     "beforeFiles": [],
-    "afterFiles": [],
+    "afterFiles": [
+      {
+        "source": "/trackflow-api/:path*",
+        "destination": "http://127.0.0.1:8000/:path*",
+        "regex": "^/trackflow-api(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))?(?:/)?$"
+      }
+    ],
     "fallback": []
   },
   "dynamicRoutes": [],
@@ -40,6 +46,12 @@
       "regex": "^/_not\\-found(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/_not\\-found(?:/)?$"
+    },
+    {
+      "page": "/backoffice/incidents",
+      "regex": "^/backoffice/incidents(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/backoffice/incidents(?:/)?$"
     },
     {
       "page": "/backoffice/inventory/orders",

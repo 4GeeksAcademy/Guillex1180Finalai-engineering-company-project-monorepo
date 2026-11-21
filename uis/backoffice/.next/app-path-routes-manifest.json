@@ -1,6 +1,7 @@
 {
   "/_global-error/page": "/_global-error",
   "/_not-found/page": "/_not-found",
+  "/backoffice/incidents/page": "/backoffice/incidents",
   "/backoffice/inventory/orders/inbound/page": "/backoffice/inventory/orders/inbound",
   "/backoffice/inventory/orders/outbound/page": "/backoffice/inventory/orders/outbound",
   "/backoffice/inventory/orders/page": "/backoffice/inventory/orders",

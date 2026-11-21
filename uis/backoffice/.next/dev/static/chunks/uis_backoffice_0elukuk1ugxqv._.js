@@ -1502,6 +1502,15 @@ function ProtectedPage({ children }) {
                                     fileName: "[project]/uis/backoffice/src/components/ProtectedPage.tsx",
                                     lineNumber: 31,
                                     columnNumber: 13
+                                }, this),
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$uis$2f$backoffice$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$uis$2f$backoffice$2f$node_modules$2f$next$2f$dist$2f$client$2f$app$2d$dir$2f$link$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
+                                    href: "/backoffice/incidents",
+                                    className: "hover:text-blue-700",
+                                    children: "Análisis de incidencias"
+                                }, void 0, false, {
+                                    fileName: "[project]/uis/backoffice/src/components/ProtectedPage.tsx",
+                                    lineNumber: 32,
+                                    columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
@@ -1518,7 +1527,7 @@ function ProtectedPage({ children }) {
                             children: "Cerrar sesión"
                         }, void 0, false, {
                             fileName: "[project]/uis/backoffice/src/components/ProtectedPage.tsx",
-                            lineNumber: 33,
+                            lineNumber: 34,
                             columnNumber: 11
                         }, this)
                     ]
@@ -1537,7 +1546,7 @@ function ProtectedPage({ children }) {
                 children: children
             }, void 0, false, {
                 fileName: "[project]/uis/backoffice/src/components/ProtectedPage.tsx",
-                lineNumber: 36,
+                lineNumber: 37,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$uis$2f$backoffice$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("footer", {
@@ -1545,7 +1554,7 @@ function ProtectedPage({ children }) {
                 children: "TrackFlow · Backoffice de inventario"
             }, void 0, false, {
                 fileName: "[project]/uis/backoffice/src/components/ProtectedPage.tsx",
-                lineNumber: 37,
+                lineNumber: 38,
                 columnNumber: 7
             }, this)
         ]
@@ -1625,7 +1634,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$uis$2f$backoffice$2f$src$2f$
 ;
 // Route requests through the same-origin Next.js server. This avoids browser
 // access to the private API port URL in Codespaces and keeps CORS out of the path.
-const API_BASE = (("TURBOPACK compile-time value", "/trackflow-api") ?? '/trackflow-api').replace(/\/$/, '');
+const API_BASE = (__TURBOPACK__imported__module__$5b$project$5d2f$uis$2f$backoffice$2f$node_modules$2f$next$2f$dist$2f$build$2f$polyfills$2f$process$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].env.NEXT_PUBLIC_INVENTORY_API_URL ?? '/trackflow-api').replace(/\/$/, '');
 class InventoryApiError extends Error {
     status;
     constructor(status, message){

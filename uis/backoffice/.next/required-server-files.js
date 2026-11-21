@@ -338,7 +338,17 @@ self.__SERVER_FILES_MANIFEST={
     "turbopack": {
       "root": "/workspaces/Guillex1180Finalai-engineering-company-project-monorepo"
     },
-    "distDirRoot": ".next"
+    "distDirRoot": ".next",
+    "_originalRewrites": {
+      "beforeFiles": [],
+      "afterFiles": [
+        {
+          "source": "/trackflow-api/:path*",
+          "destination": "http://127.0.0.1:8000/:path*"
+        }
+      ],
+      "fallback": []
+    }
   },
   "appDir": "/workspaces/Guillex1180Finalai-engineering-company-project-monorepo/uis/backoffice",
   "relativeAppDir": "uis/backoffice",

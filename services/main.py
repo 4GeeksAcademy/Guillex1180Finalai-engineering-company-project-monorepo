@@ -10,6 +10,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from services.database import create_db_and_tables, provision_bootstrap_user
+from services.routers.incidents import router as incidents_router
 from services.routers.inventory import router as inventory_router
 
 
@@ -20,7 +21,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     yield
 
 
-app = FastAPI(title="TrackFlow Inventory API",
+app = FastAPI(title="TrackFlow API",
               version="1.0.0", lifespan=lifespan)
 
 allowed_origins = [
@@ -48,6 +49,7 @@ async def codespaces_health_check(request, call_next):
 
 
 app.include_router(inventory_router)
+app.include_router(incidents_router)
 
 
 @app.get("/health", tags=["health"])

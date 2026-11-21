@@ -1,6 +1,7 @@
 {
   "/_global-error/page": "app/_global-error/page.js",
   "/_not-found/page": "app/_not-found/page.js",
+  "/backoffice/incidents/page": "app/backoffice/incidents/page.js",
   "/backoffice/inventory/orders/inbound/page": "app/backoffice/inventory/orders/inbound/page.js",
   "/backoffice/inventory/orders/outbound/page": "app/backoffice/inventory/orders/outbound/page.js",
   "/backoffice/inventory/orders/page": "app/backoffice/inventory/orders/page.js",
