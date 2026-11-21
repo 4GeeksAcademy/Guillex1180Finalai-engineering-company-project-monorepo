@@ -1,0 +1,39 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/backoffice/layout,_N_T_/backoffice/incidents/layout,_N_T_/backoffice/incidents/page,_N_T_/backoffice/incidents"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/backoffice/incidents/__PAGE__"
+  ],
+  "prefetchHints": {
+    "hints": 64,
+    "slots": {
+      "children": {
+        "hints": 96,
+        "slots": {
+          "children": {
+            "hints": 96,
+            "slots": {
+              "children": {
+                "hints": 160,
+                "slots": null
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "routeCache": {
+    "key": "/route-cache/APP_PAGE/bc225ae70acf24abc1f4c5a2015297140fc4bf3046092b017d72b483ba275731/$/backoffice/incidents",
+    "owner": {
+      "kind": "APP_PAGE",
+      "sourceRoute": "/backoffice/incidents/page"
+    },
+    "isFallback": false
+  }
+}

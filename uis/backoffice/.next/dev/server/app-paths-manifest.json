@@ -1,0 +1,9 @@
+{
+  "/backoffice/incidents/page": "app/backoffice/incidents/page.js",
+  "/backoffice/inventory/orders/inbound/page": "app/backoffice/inventory/orders/inbound/page.js",
+  "/backoffice/inventory/orders/outbound/page": "app/backoffice/inventory/orders/outbound/page.js",
+  "/backoffice/inventory/orders/page": "app/backoffice/inventory/orders/page.js",
+  "/backoffice/inventory/products/page": "app/backoffice/inventory/products/page.js",
+  "/login/page": "app/login/page.js",
+  "/page": "app/page.js"
+}
