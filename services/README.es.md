@@ -38,6 +38,13 @@ Opcionalmente define `BACKOFFICE_CORS_ORIGINS` como una lista de orígenes separ
 - `GET /inventory/orders`
 - `GET /health`
 
+### Análisis de incidencias TrackFlow (HITO 6)
+
+- `POST /api/incidents/analyze` — acepta `multipart/form-data` con el campo `file` (CSV UTF-8) y devuelve totales, inválidos por regla, categorías, estados, países y satisfacción agregada.
+- `GET /api/incidents/results/export` — descarga como `text/csv` las métricas agregadas del último análisis del mismo usuario autenticado.
+
+Ambos endpoints requieren `Authorization: Bearer <token>`. El análisis reutilizable está en `services/incidents.py` y lo invoca tanto la API como `scripts/analyze.py`. `customer_email` solo se valida; nunca se incluye en respuestas, mensajes ni CSV. El resultado del último análisis se conserva en memoria del proceso, así que debe migrarse a almacenamiento compartido si se ejecuta FastAPI con varios workers o instancias.
+
 Las rutas de inventario requieren `Authorization: Bearer <token>` resuelto mediante la tabla `users` de TinyDB. Las entradas requieren `sku_id`, `quantity`, `reference` y `warehouse`; las salidas, `sku_id`, `quantity`, `exit_type`, `tracking_number` y `warehouse`. `user_uuid` se deriva del token autenticado. Las salidas insuficientes responden 400 con el mensaje definido en el briefing; `dispatch` requiere tracking y `loss` exige `tracking_number: null`.
 
 ### Datos de desarrollo
