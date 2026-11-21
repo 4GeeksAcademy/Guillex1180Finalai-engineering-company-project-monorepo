@@ -18,7 +18,7 @@ export default function LoginPage() {
       return;
     }
     saveSession(token, userUuid);
-    router.replace('/inventory/products');
+    router.replace('/backoffice/inventory/products');
   }
 
   return (

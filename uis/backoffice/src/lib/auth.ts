@@ -5,7 +5,8 @@ export const USER_UUID_KEY = 'trackflow_user_uuid';
 
 export function getAccessToken(): string | null {
   if (typeof window === 'undefined') return null;
-  return window.localStorage.getItem(TOKEN_KEY);
+  const token = window.localStorage.getItem(TOKEN_KEY)?.trim();
+  return token ? token.replace(/^Bearer\s+/i, '') : null;
 }
 
 export function getUserUuid(): string {

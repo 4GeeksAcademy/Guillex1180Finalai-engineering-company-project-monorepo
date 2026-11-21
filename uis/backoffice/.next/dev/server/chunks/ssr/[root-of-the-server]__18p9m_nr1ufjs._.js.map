@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 10, "column": 0}, "map": {"version":3,"sources":["file:///workspaces/Guillex1180Finalai-engineering-company-project-monorepo/uis/backoffice/src/app/page.tsx"],"sourcesContent":["import { redirect } from 'next/navigation';\n\nexport default function HomePage() {\n  redirect('/backoffice/inventory/products');\n}\n"],"names":["HomePage"],"mappings":";;;;AAAA;AAAA;;AAEe,SAASA;IACtB,IAAA,sNAAQ,EAAC;AACX"}}]
+}

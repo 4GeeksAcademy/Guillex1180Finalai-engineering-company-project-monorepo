@@ -2,13 +2,13 @@
 
 ## Estado actual del desarrollo
 
-| Hito   | Descripción                                                          | Estado                                                       | Rama                        |
-| ------ | -------------------------------------------------------------------- | ------------------------------------------------------------ | --------------------------- |
-| HITO 1 | Sitio web corporativo público con formulario de captación de leads   | ✅ Completado                                                | `feature/corporate-website` |
-| HITO 2 | Fundamentos de programación — utilidades TypeScript                  | ✅ Completado                                                | `feature/fundamentals`      |
-| HITO 3 | Talent Pipeline Tracker — gestión de candidaturas                    | ✅ Completado                                                | `feature/domain-models`     |
-| HITO 4 | Infraestructura de agentes — memory bank, reglas, skills             | ✅ Completado                                                | `feature/agent-memory-bank` |
-| HITO 5 | Backoffice de inventario — Next.js, integración con API `/inventory` | 🟡 Implementado; pendiente de backend y validación integrada | `main`                      |
+| Hito   | Descripción                                                          | Estado                                                                    | Rama                        |
+| ------ | -------------------------------------------------------------------- | ------------------------------------------------------------------------- | --------------------------- |
+| HITO 1 | Sitio web corporativo público con formulario de captación de leads   | ✅ Completado                                                             | `feature/corporate-website` |
+| HITO 2 | Fundamentos de programación — utilidades TypeScript                  | ✅ Completado                                                             | `feature/fundamentals`      |
+| HITO 3 | Talent Pipeline Tracker — gestión de candidaturas                    | ✅ Completado                                                             | `feature/domain-models`     |
+| HITO 4 | Infraestructura de agentes — memory bank, reglas, skills             | ✅ Completado                                                             | `feature/agent-memory-bank` |
+| HITO 5 | Backoffice de inventario — Next.js, integración con API `/inventory` | 🟡 Backoffice implementado y validado; backend/integración real pendiente | `main`                      |
 
 ## HITO 1 — Sitio web corporativo
 
@@ -61,9 +61,11 @@
 
 ## HITO 5 — Backoffice de inventario
 
-- ✅ Creada app Next.js 14/React 18 en `uis/backoffice/`, con Tailwind y documentación de ejecución.
-- ✅ Cliente centralizado para endpoints `/inventory`, bearer token y errores legibles.
-- ✅ Listado de SKUs con stock/almacén y umbrales visuales; formularios de entradas y salidas; historial de solo lectura.
+- ✅ App Next.js en `uis/backoffice/`, con Tailwind y documentación de ejecución.
+- ✅ Cliente centralizado para endpoints `/inventory`, bearer token y errores legibles; ninguna vista invoca `fetch` directamente.
+- ✅ Rutas canónicas `/backoffice/inventory/...`: listado de SKU con stock/almacén y umbrales visuales, formularios StockEntry/StockExit e historial de solo lectura.
+- ✅ Estados de carga, éxito y error visibles; el outbound evita reportar un fallo si solo falla el refresco posterior a una salida ya confirmada.
 - ✅ Protección UX basada en token y formulario para configurar token/UUID sin simular autenticación.
-- ⚠️ Backend `services/` y proveedor de auth no existen aún en el repositorio; no se ha probado integración real.
-- ⏳ Pendiente instalar dependencias y correr typecheck/build.
+- ✅ `.env.example` documenta `NEXT_PUBLIC_INVENTORY_API_URL`; `.env.local` está ignorado por Git y no rastreado.
+- ✅ `npx tsc --noEmit` y `npm run build` ejecutados desde `uis/backoffice` sin errores. No existe script `lint` en el paquete.
+- ⚠️ Backend `services/` y proveedor de auth no existen aún; no se ha probado la integración real ni validación de token en servidor.

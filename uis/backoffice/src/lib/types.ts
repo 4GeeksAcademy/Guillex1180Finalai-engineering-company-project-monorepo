@@ -37,7 +37,7 @@ export interface StockExit {
 
 export interface StockOrder {
   id: number;
-  order_type?: 'inbound' | 'entry' | 'outbound' | 'exit';
+  order_type?: 'inbound' | 'entry' | 'outbound' | 'exit' | (string & {});
   sku_id: number;
   sku_code?: string;
   quantity: number;

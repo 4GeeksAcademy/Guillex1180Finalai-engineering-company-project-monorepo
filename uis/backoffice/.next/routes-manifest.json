@@ -42,6 +42,30 @@
       "namedRegex": "^/_not\\-found(?:/)?$"
     },
     {
+      "page": "/backoffice/inventory/orders",
+      "regex": "^/backoffice/inventory/orders(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/backoffice/inventory/orders(?:/)?$"
+    },
+    {
+      "page": "/backoffice/inventory/orders/inbound",
+      "regex": "^/backoffice/inventory/orders/inbound(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/backoffice/inventory/orders/inbound(?:/)?$"
+    },
+    {
+      "page": "/backoffice/inventory/orders/outbound",
+      "regex": "^/backoffice/inventory/orders/outbound(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/backoffice/inventory/orders/outbound(?:/)?$"
+    },
+    {
+      "page": "/backoffice/inventory/products",
+      "regex": "^/backoffice/inventory/products(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/backoffice/inventory/products(?:/)?$"
+    },
+    {
       "page": "/inventory/orders",
       "regex": "^/inventory/orders(?:/)?$",
       "routeKeys": {},

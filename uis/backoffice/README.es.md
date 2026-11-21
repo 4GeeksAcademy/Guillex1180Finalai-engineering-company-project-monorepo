@@ -21,9 +21,11 @@ Configura `NEXT_PUBLIC_INVENTORY_API_URL` en `.env.local` con la URL base de la 
 
 ## Vistas
 
-- `/inventory/products`: productos, almacén y stock actual; umbrales de interfaz: agotado = 0, bajo = 1–9, saludable = 10 o más.
-- `/inventory/orders/inbound`: recepción con SKU, cantidad, referencia y almacén.
-- `/inventory/orders/outbound`: despacho o pérdida; muestra stock antes del envío, exige tracking para despacho y valida stock en cliente.
-- `/inventory/orders`: historial de solo lectura.
+- `/backoffice/inventory/products`: SKU, marca cliente, almacén y stock actual; umbrales de interfaz: agotado = 0, bajo = 1–9, saludable = 10 o más.
+- `/backoffice/inventory/orders/inbound`: recepción de mercancía con SKU, cantidad, referencia y almacén.
+- `/backoffice/inventory/orders/outbound`: despacho o pérdida confirmada; muestra stock antes del envío, exige tracking para despacho y valida stock en cliente.
+- `/backoffice/inventory/orders`: historial de solo lectura de movimientos de stock.
+
+Las rutas antiguas `/inventory/...` se conservan como alias por compatibilidad.
 
 Las solicitudes se centralizan en `src/lib/inventory.ts`; las páginas de inventario requieren que exista un token local y redirigen a `/login` si falta. Esto es solo una protección de UX: la API debe validar token, permisos, stock por SKU/almacén y todas las reglas de negocio en servidor. La aplicación no considera validado un token por el mero hecho de estar almacenado.

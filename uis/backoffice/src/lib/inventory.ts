@@ -7,7 +7,9 @@ import type {
   StockOrder,
 } from './types';
 
-const API_BASE = (process.env.NEXT_PUBLIC_INVENTORY_API_URL ?? 'http://localhost:8000').replace(/\/$/, '');
+// Route requests through the same-origin Next.js server. This avoids browser
+// access to the private API port URL in Codespaces and keeps CORS out of the path.
+const API_BASE = (process.env.NEXT_PUBLIC_INVENTORY_API_URL ?? '/trackflow-api').replace(/\/$/, '');
 
 export class InventoryApiError extends Error {
   constructor(
@@ -19,11 +21,31 @@ export class InventoryApiError extends Error {
   }
 }
 
+function readableError(value: unknown): string | undefined {
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value)) {
+    const messages = value.map((item) => {
+      if (!item || typeof item !== 'object') return readableError(item);
+      const error = item as { loc?: unknown[]; msg?: unknown; message?: unknown };
+      const message = readableError(error.msg ?? error.message);
+      return message ? `${Array.isArray(error.loc) ? `${error.loc.slice(1).join('.')}: ` : ''}${message}` : undefined;
+    }).filter((item): item is string => Boolean(item));
+    return messages.length ? messages.join('; ') : undefined;
+  }
+  if (value && typeof value === 'object') {
+    const body = value as { detail?: unknown; message?: unknown; error?: unknown; msg?: unknown };
+    const direct = readableError(body.detail ?? body.message ?? body.error ?? body.msg);
+    if (direct) return direct;
+  }
+  return undefined;
+}
+
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = getAccessToken();
+  if (!token) throw new InventoryApiError(401, 'No hay una sesión activa. Inicia sesión para continuar.');
   const headers = new Headers(init.headers);
   headers.set('Content-Type', 'application/json');
-  if (token) headers.set('Authorization', `Bearer ${token}`);
+  headers.set('Authorization', `Bearer ${token}`);
 
   let response: Response;
   try {
@@ -34,19 +56,16 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 
   if (!response.ok) {
     const raw = await response.text().catch(() => '');
-    let message = raw || response.statusText || 'Error desconocido';
+    let message: string | undefined;
     try {
       const body: unknown = JSON.parse(raw);
       if (body && typeof body === 'object') {
-        const errorBody = body as { detail?: unknown; message?: unknown; error?: unknown };
-        const candidate = errorBody.detail ?? errorBody.message ?? errorBody.error;
-        if (typeof candidate === 'string') message = candidate;
-        else if (candidate !== undefined) message = JSON.stringify(candidate);
+        message = readableError(body);
       }
     } catch {
-      // Preserve plain-text API errors as-is.
+      message = raw.trim() || undefined;
     }
-    throw new InventoryApiError(response.status, `Error ${response.status}: ${message}`);
+    throw new InventoryApiError(response.status, `Error ${response.status}: ${message || response.statusText || 'No se recibió un mensaje de error.'}`);
   }
 
   if (response.status === 204) return undefined as T;
