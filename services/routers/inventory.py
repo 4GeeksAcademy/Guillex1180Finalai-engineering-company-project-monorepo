@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, status
 from sqlmodel import Session, select
 
 from services.database import find_user_uuid_for_token, get_db
-from services.models import SKU, StockEntry, StockExit
+from services.api.models import SKU, StockEntry, StockExit
 from services.schemas import (
     SKUCreate,
     SKURead,

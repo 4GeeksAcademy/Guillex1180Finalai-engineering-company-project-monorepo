@@ -1,0 +1,39 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/backoffice/layout,_N_T_/backoffice/suppliers/layout,_N_T_/backoffice/suppliers/page,_N_T_/backoffice/suppliers"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/backoffice/suppliers/__PAGE__"
+  ],
+  "prefetchHints": {
+    "hints": 64,
+    "slots": {
+      "children": {
+        "hints": 96,
+        "slots": {
+          "children": {
+            "hints": 96,
+            "slots": {
+              "children": {
+                "hints": 160,
+                "slots": null
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "routeCache": {
+    "key": "/route-cache/APP_PAGE/e1af8eb32d89bc83ce4d4de9b426fe4a0d265d5408fd9a2830e17a5a1110051c/$/backoffice/suppliers",
+    "owner": {
+      "kind": "APP_PAGE",
+      "sourceRoute": "/backoffice/suppliers/page"
+    },
+    "isFallback": false
+  }
+}

@@ -1,4 +1,8 @@
-"""Pydantic request and response schemas for inventory API routes."""
+"""Pydantic request and response schemas for inventory API routes.
+
+Supplier models are re-exported here for compatibility; their canonical
+definitions live in ``services.api.models`` alongside the API implementation.
+"""
 
 from __future__ import annotations
 
@@ -6,6 +10,18 @@ from datetime import datetime
 from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+from services.api.models import (
+    PositiveRate,
+    SupplierCategory,
+    SupplierCountry,
+    SupplierCreate,
+    SupplierCurrency,
+    SupplierRateUpdate,
+    SupplierResponse,
+    SupplierStatus,
+    SupplierStatusUpdate,
+)
 
 Warehouse = Literal["LA", "ZGZ"]
 Category = Literal["fashion", "electronics", "cosmetics"]
