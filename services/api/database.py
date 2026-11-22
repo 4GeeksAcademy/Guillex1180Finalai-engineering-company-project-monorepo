@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import os
 from pathlib import Path
 from typing import Generator
@@ -11,7 +10,25 @@ from sqlmodel import Session, SQLModel, create_engine
 from tinydb import TinyDB
 
 
+def _load_dotenv_if_present() -> None:
+    env_file = Path(__file__).resolve().parents[2] / ".env"
+    if not env_file.exists():
+        return
+    for line in env_file.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#") or "=" not in stripped:
+            continue
+        key, value = stripped.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip("\"").strip("\x27")
+        os.environ.setdefault(key, value)
+
+
 def _database_url() -> str:
+    _load_dotenv_if_present()
+    supabase_url = os.getenv("SUPABASE_DATABASE_URL", "").strip()
+    if supabase_url:
+        return supabase_url
     return os.getenv("INVENTORY_DATABASE_URL", "sqlite:///./data/trackflow_inventory.db")
 
 
@@ -27,8 +44,9 @@ engine = _make_engine()
 
 
 def create_db_and_tables() -> None:
-    # Import models before metadata.create_all registers their table definitions.
-    from services.api import models  # noqa: F401
+    # Register only inventory-ledger SQLModels; User and Profile are Pydantic
+    # records stored exclusively in TinyDB and must never become SQL tables.
+    from services.api.models import SKU, StockEntry, StockExit  # noqa: F401
 
     SQLModel.metadata.create_all(engine)
 
@@ -44,30 +62,10 @@ def _tinydb_path() -> Path:
     return path
 
 
-def token_digest(token: str) -> str:
-    return hashlib.sha256(token.encode("utf-8")).hexdigest()
-
-
-def find_user_uuid_for_token(token: str) -> str | None:
-    """Resolve a bearer token against TinyDB without keeping raw tokens there."""
-    digest = token_digest(token)
-    with TinyDB(_tinydb_path()) as db:
-        for user in db.table("users").all():
-            stored_digest = user.get("token_sha256")
-            if isinstance(stored_digest, str) and stored_digest == digest:
-                value = user.get("user_uuid") or user.get("uuid")
-                return str(value) if value else None
-    return None
-
-
 def provision_bootstrap_user() -> None:
-    """Optionally add a local API operator using environment-provided credentials."""
-    token = os.getenv("TRACKFLOW_BOOTSTRAP_TOKEN", "").strip()
-    user_uuid = os.getenv("TRACKFLOW_BOOTSTRAP_USER_UUID", "").strip()
-    if not token or not user_uuid:
-        return
-    digest = token_digest(token)
-    with TinyDB(_tinydb_path()) as db:
-        users = db.table("users")
-        if not any(user.get("token_sha256") == digest for user in users.all()):
-            users.insert({"user_uuid": user_uuid, "token_sha256": digest})
+    """Retained as a no-op for compatibility with the existing API lifespan.
+
+    Account provisioning must use the public registration or an explicit
+    administrative operation; bearer-token bootstrap records are not JWT users.
+    """
+    return None

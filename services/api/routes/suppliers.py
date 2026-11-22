@@ -18,7 +18,8 @@ from services.api.models import (
     SupplierStatus,
     SupplierStatusUpdate,
 )
-from services.routers.inventory import AuthUser
+from services.api.security import CurrentUser
+from services.api.users import is_admin
 
 router = APIRouter(prefix="/suppliers", tags=["suppliers"])
 
@@ -42,7 +43,7 @@ def _find_by_id(table: Any, supplier_id: str) -> tuple[int, dict[str, Any]] | No
 
 @router.get("", response_model=list[SupplierResponse])
 def list_suppliers(
-    _user_uuid: AuthUser,
+    current_user: CurrentUser,
     country: SupplierCountry | None = Query(default=None),
     category: SupplierCategory | None = Query(default=None),
     status_filter: Annotated[SupplierStatus |
@@ -63,7 +64,9 @@ def list_suppliers(
 
 
 @router.post("", response_model=SupplierResponse, status_code=status.HTTP_201_CREATED)
-def create_supplier(data: SupplierCreate, _user_uuid: AuthUser) -> SupplierResponse:
+def create_supplier(data: SupplierCreate, _current_user: CurrentUser) -> SupplierResponse:
+    if not is_admin(_current_user):
+        raise HTTPException(status_code=403, detail="Admin role required")
     # Pydantic validates the full payload before TinyDB is opened or written.
     document = data.model_dump()
     document["updated_at"] = datetime.now(timezone.utc).isoformat()
@@ -74,7 +77,7 @@ def create_supplier(data: SupplierCreate, _user_uuid: AuthUser) -> SupplierRespo
 
 
 @router.get("/{supplier_id}", response_model=SupplierResponse)
-def get_supplier(supplier_id: str, _user_uuid: AuthUser) -> SupplierResponse:
+def get_supplier(supplier_id: str, current_user: CurrentUser) -> SupplierResponse:
     with TinyDB(_tinydb_path()) as db:
         found = _find_by_id(_supplier_table(db), supplier_id)
         if found is None:
@@ -87,8 +90,10 @@ def get_supplier(supplier_id: str, _user_uuid: AuthUser) -> SupplierResponse:
 def update_supplier_rate(
     supplier_id: str,
     data: SupplierRateUpdate,
-    _user_uuid: AuthUser,
+    current_user: CurrentUser,
 ) -> SupplierResponse:
+    if not is_admin(current_user):
+        raise HTTPException(status_code=403, detail="Admin role required")
     with TinyDB(_tinydb_path()) as db:
         table = _supplier_table(db)
         found = _find_by_id(table, supplier_id)
@@ -108,8 +113,10 @@ def update_supplier_rate(
 def update_supplier_status(
     supplier_id: str,
     data: SupplierStatusUpdate,
-    _user_uuid: AuthUser,
+    current_user: CurrentUser,
 ) -> SupplierResponse:
+    if not is_admin(current_user):
+        raise HTTPException(status_code=403, detail="Admin role required")
     with TinyDB(_tinydb_path()) as db:
         table = _supplier_table(db)
         found = _find_by_id(table, supplier_id)

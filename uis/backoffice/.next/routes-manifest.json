@@ -78,12 +78,6 @@
       "namedRegex": "^/backoffice/inventory/products(?:/)?$"
     },
     {
-      "page": "/backoffice/suppliers",
-      "regex": "^/backoffice/suppliers(?:/)?$",
-      "routeKeys": {},
-      "namedRegex": "^/backoffice/suppliers(?:/)?$"
-    },
-    {
       "page": "/inventory/orders",
       "regex": "^/inventory/orders(?:/)?$",
       "routeKeys": {},

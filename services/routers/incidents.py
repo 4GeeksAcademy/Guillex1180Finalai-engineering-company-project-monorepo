@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from fastapi.responses import Response
 
 from services.incidents import analyze_records, json_summary, parse_incident_csv, results_csv
-from services.routers.inventory import AuthUser
+from services.api.security import CurrentUser
 
 router = APIRouter(prefix="/api/incidents", tags=["incidents"])
 
@@ -20,7 +20,7 @@ _latest_analysis: dict[str, dict[str, object]] = {}
 
 @router.post("/analyze")
 async def analyze_incidents(
-    _user_uuid: AuthUser,
+    current_user: CurrentUser,
     file: UploadFile = File(...),
 ) -> dict[str, object]:
     """Accept and analyze an incident CSV uploaded as multipart/form-data."""
@@ -40,14 +40,14 @@ async def analyze_incidents(
 
     summary = analyze_records(records)
     global _latest_analysis
-    _latest_analysis[_user_uuid] = summary
+    _latest_analysis[current_user["id"]] = summary
     return json_summary(summary)
 
 
 @router.get("/results/export")
-def export_latest_analysis(_user_uuid: AuthUser) -> Response:
+def export_latest_analysis(current_user: CurrentUser) -> Response:
     """Download the latest aggregate analysis as CSV (no source PII)."""
-    summary = _latest_analysis.get(_user_uuid)
+    summary = _latest_analysis.get(current_user["id"])
     if summary is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

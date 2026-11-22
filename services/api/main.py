@@ -11,6 +11,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from services.api.routes.suppliers import router as suppliers_router
+from services.api.routes.auth import router as auth_router
+from services.api.routes.profiles import router as profiles_router
+from services.api.routes.users import router as users_router
 from services.api.database import create_db_and_tables, provision_bootstrap_user
 from services.routers.incidents import router as incidents_router
 from services.routers.inventory import router as inventory_router
@@ -34,7 +37,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type"],
 )
 
@@ -50,6 +53,9 @@ async def codespaces_health_check(request, call_next):
 app.include_router(inventory_router)
 app.include_router(incidents_router)
 app.include_router(suppliers_router)
+app.include_router(users_router)
+app.include_router(profiles_router)
+app.include_router(auth_router)
 
 
 @app.get("/health", tags=["health"])

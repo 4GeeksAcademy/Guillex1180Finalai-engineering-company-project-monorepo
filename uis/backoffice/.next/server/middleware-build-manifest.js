@@ -7,9 +7,9 @@ globalThis.__BUILD_MANIFEST = {
     "static/chunks/0cz1d0mv5g_q7.js"
   ],
   "lowPriorityFiles": [
-    "static/jwxLhT8oC-Nxasy71JYUc/_buildManifest.js",
-    "static/jwxLhT8oC-Nxasy71JYUc/_ssgManifest.js",
-    "static/jwxLhT8oC-Nxasy71JYUc/_clientMiddlewareManifest.js"
+    "static/zQyLQP_to_5tytwH3WF4M/_buildManifest.js",
+    "static/zQyLQP_to_5tytwH3WF4M/_ssgManifest.js",
+    "static/zQyLQP_to_5tytwH3WF4M/_clientMiddlewareManifest.js"
   ],
   "rootMainFiles": [
     "static/chunks/35jp3vmrg6mx5.js",
@@ -98,17 +98,6 @@ globalThis.__BUILD_MANIFEST = {
       ]
     },
     "/backoffice/inventory/products/page": {
-      "otherChunks": [
-        "static/chunks/35jp3vmrg6mx5.js",
-        "static/chunks/16d_5fos52q79.js",
-        "static/chunks/1s022o_s9g7n3.js",
-        "static/chunks/1xxny6y0tcw61.js"
-      ],
-      "runtimeModuleIds": [
-        24292
-      ]
-    },
-    "/backoffice/suppliers/page": {
       "otherChunks": [
         "static/chunks/35jp3vmrg6mx5.js",
         "static/chunks/16d_5fos52q79.js",

@@ -4,11 +4,12 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 
-from services.database import find_user_uuid_for_token, get_db
+from services.database import get_db
 from services.api.models import SKU, StockEntry, StockExit
+from services.api.security import CurrentUser
 from services.schemas import (
     SKUCreate,
     SKURead,
@@ -23,16 +24,9 @@ router = APIRouter(prefix="/inventory", tags=["inventory"])
 SessionDep = Annotated[Session, Depends(get_db)]
 
 
-def current_user_uuid(authorization: Annotated[str | None, Header()] = None) -> str:
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Bearer token required.")
-    token = authorization.removeprefix("Bearer ").strip()
-    user_uuid = find_user_uuid_for_token(token)
-    if not user_uuid:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid bearer token.")
-    return user_uuid
+def current_user_uuid(current_user: CurrentUser) -> str:
+    """Use the authenticated TinyDB user ID as the SQL ledger user_uuid."""
+    return current_user["id"]
 
 
 AuthUser = Annotated[str, Depends(current_user_uuid)]
@@ -120,13 +114,18 @@ def create_outbound(data: StockExitCreate, session: SessionDep, authenticated_us
 
 
 @router.get("/orders", response_model=list[StockOrderRead])
-def list_orders(session: SessionDep, _user_uuid: AuthUser) -> list[StockOrderRead]:
+def list_orders(
+    session: SessionDep,
+    current_user: CurrentUser,
+) -> list[StockOrderRead]:
     rows: list[tuple[Any, SKU]] = []
-    for entry in session.exec(select(StockEntry)).all():
+    entry_statement = select(StockEntry)
+    exit_statement = select(StockExit)
+    for entry in session.exec(entry_statement).all():
         sku = session.get(SKU, entry.sku_id)
         if sku is not None:
             rows.append((entry, sku))
-    for exit_record in session.exec(select(StockExit)).all():
+    for exit_record in session.exec(exit_statement).all():
         sku = session.get(SKU, exit_record.sku_id)
         if sku is not None:
             rows.append((exit_record, sku))
