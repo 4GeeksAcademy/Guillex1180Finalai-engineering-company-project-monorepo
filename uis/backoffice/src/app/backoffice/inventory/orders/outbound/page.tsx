@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useState } from 'react';
 import Feedback from '@/components/Feedback';
 import ProtectedPage from '@/components/ProtectedPage';
 import { getUserUuid } from '@/lib/auth';
@@ -15,17 +15,26 @@ export default function OutboundPage() {
   const [tracking, setTracking] = useState('');
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [error, setError] = useState('');
+  const [refreshWarning, setRefreshWarning] = useState('');
   const [success, setSuccess] = useState('');
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    inventoryApi.listSKUs().then((items) => {
+  const loadProducts = useCallback(async () => {
+    setLoadingProducts(true);
+    setError('');
+    try {
+      const items = await inventoryApi.listSKUs();
       setProducts(items);
       const requestedId = new URLSearchParams(window.location.search).get('sku_id');
       if (requestedId && items.some((item) => item.id === Number(requestedId))) setSkuId(requestedId);
-    }).catch((reason: unknown) => setError(reason instanceof Error ? reason.message : 'No se pudieron cargar los SKU.'))
-      .finally(() => setLoadingProducts(false));
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'No se pudieron cargar los SKU.');
+    } finally {
+      setLoadingProducts(false);
+    }
   }, []);
+
+  useEffect(() => { void loadProducts(); }, [loadProducts]);
 
   const selected = products.find((item) => item.id === Number(skuId));
   const requestedQuantity = Number(quantity);
@@ -43,19 +52,22 @@ export default function OutboundPage() {
     try {
       await inventoryApi.createOutbound({ sku_id: selected.id, quantity: requestedQuantity, exit_type: exitType, tracking_number: trackingRequired ? tracking.trim() : null, warehouse: selected.warehouse as Warehouse, user_uuid: getUserUuid() });
       setSuccess('Salida de stock registrada correctamente.'); setQuantity(''); setTracking('');
-    } catch (reason) { setError(reason instanceof Error ? reason.message : 'No se pudo registrar la salida de stock.'); }
+    } catch (reason) { setError(reason instanceof Error ? reason.message : 'No se pudo registrar la salida de stock.'); return; }
     finally { setBusy(false); }
     // A refresh failure must not report a failed StockExit after the POST succeeded.
+    setRefreshWarning('');
     try {
       const updated = await inventoryApi.listSKUs();
       setProducts(updated);
     } catch {
-      // Keep the successful confirmation; the operator can reload to refresh stock.
+      setRefreshWarning('La salida se registró, pero no se pudo actualizar el stock mostrado.');
     }
   }
 
   return <ProtectedPage><div className="max-w-2xl"><p className="text-sm font-semibold uppercase tracking-wider text-blue-700">StockExit · despacho o pérdida confirmada</p><h1 className="mt-1 text-3xl font-bold">Registrar salida de stock</h1><p className="mt-2 text-slate-600">Consulta el stock actual del almacén antes de registrar un despacho a cliente o una pérdida confirmada.</p>
     <form onSubmit={submit} className="mt-6 space-y-5 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      {error && <div className="space-y-2"><Feedback kind="error">{error}</Feedback>{products.length === 0 && <button type="button" onClick={() => void loadProducts()} disabled={loadingProducts} className="rounded-lg border border-blue-700 px-4 py-2 text-sm font-semibold text-blue-700 disabled:opacity-50">{loadingProducts ? 'Cargando…' : 'Reintentar carga de SKU'}</button>}</div>}
+      {refreshWarning && <div role="alert" className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">{refreshWarning}<button type="button" onClick={() => void loadProducts()} className="ml-3 font-semibold underline">Actualizar stock</button></div>}
       <label className="block text-sm font-medium">SKU / descripción<select required value={skuId} onChange={(event) => setSkuId(event.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5"><option value="">{loadingProducts ? 'Cargando SKU…' : 'Seleccionar SKU…'}</option>{products.map((item) => <option key={item.id} value={item.id}>{item.name} · {item.sku} · stock {item.current_stock} · {item.warehouse}</option>)}</select></label>
       {selected && <div className="rounded-lg bg-slate-100 px-4 py-3 text-sm">Stock actual en {selected.warehouse}: <strong>{selected.current_stock} unidades</strong></div>}
       <label className="block text-sm font-medium">Unidades a despachar o dar de baja<input required min="1" type="number" value={quantity} onChange={(event) => setQuantity(event.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5" /></label>

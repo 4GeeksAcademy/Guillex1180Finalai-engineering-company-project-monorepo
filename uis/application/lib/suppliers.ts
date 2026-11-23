@@ -57,20 +57,35 @@ export class SuppliersApiError extends Error {
   }
 }
 
-function errorMessage(raw: string, fallback: string): string {
-  try {
-    const body: unknown = JSON.parse(raw);
-    if (body && typeof body === 'object' && 'detail' in body) {
-      const detail = (body as { detail: unknown }).detail;
-      if (typeof detail === 'string') return detail;
-      if (Array.isArray(detail)) {
-        return detail.map((item) => item && typeof item === 'object' && 'msg' in item ? String((item as { msg: unknown }).msg) : String(item)).join('; ');
-      }
-    }
-  } catch {
-    if (raw.trim()) return raw.trim();
+function errorMessage(raw: unknown): string | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const body = raw as { detail?: unknown; message?: unknown; error?: unknown };
+  const detail = body.detail ?? body.message ?? body.error;
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail)) {
+    const messages = detail.map((item) => item && typeof item === 'object' && 'msg' in item
+      ? String((item as { msg: unknown }).msg)
+      : undefined).filter((item): item is string => Boolean(item));
+    return messages.length ? messages.join('; ') : undefined;
   }
-  return fallback;
+  return undefined;
+}
+
+function safeError(status: number, details?: string): string {
+  if (status === 401) return 'Tu sesión ha caducado. Inicia sesión de nuevo e inténtalo otra vez.';
+  if (status === 403) return 'No tienes permiso para realizar esta acción.';
+  if (status === 404) return 'No se encontró el proveedor solicitado. Actualiza la página e inténtalo de nuevo.';
+  if (status >= 500) return 'El servicio de proveedores no está disponible en este momento. Inténtalo de nuevo más tarde.';
+  void details;
+  return 'No se pudo completar la solicitud. Revisa los datos e inténtalo de nuevo.';
+}
+
+async function responseError(response: Response): Promise<string> {
+  let body: unknown;
+  try {
+    body = await response.json();
+  } catch { /* The response may not contain JSON. */ }
+  return safeError(response.status, errorMessage(body));
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -84,15 +99,18 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   try {
     response = await fetch(`${API_BASE}${path}`, { ...init, headers, cache: 'no-store' });
   } catch {
-    throw new SuppliersApiError(0, `No se pudo conectar con la API (${API_BASE}). Comprueba que el backend esté ejecutándose.`);
+    throw new SuppliersApiError(0, 'No se pudo conectar con el servicio de proveedores. Comprueba tu conexión e inténtalo de nuevo.');
   }
 
   if (!response.ok) {
-    const raw = await response.text().catch(() => '');
-    throw new SuppliersApiError(response.status, `Error ${response.status}: ${errorMessage(raw, response.statusText || 'Solicitud rechazada.')}`);
+    throw new SuppliersApiError(response.status, await responseError(response));
   }
   if (response.status === 204) return undefined as T;
-  return response.json() as Promise<T>;
+  try {
+    return await response.json() as T;
+  } catch {
+    throw new SuppliersApiError(0, 'El servicio devolvió una respuesta inesperada. Actualiza la página e inténtalo de nuevo.');
+  }
 }
 
 export const suppliersApi = {

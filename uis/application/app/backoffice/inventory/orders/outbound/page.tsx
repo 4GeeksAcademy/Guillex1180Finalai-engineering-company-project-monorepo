@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useState } from 'react';
 import Feedback from '@/components/Feedback';
 import ProtectedPage from '@/components/ProtectedPage';
 import { getUserUuid } from '@/lib/auth';
@@ -16,16 +16,25 @@ export default function OutboundPage() {
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [refreshWarning, setRefreshWarning] = useState('');
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    inventoryApi.listSKUs().then((items) => {
+  const loadProducts = useCallback(async () => {
+    setLoadingProducts(true);
+    setError('');
+    try {
+      const items = await inventoryApi.listSKUs();
       setProducts(items);
       const requestedId = new URLSearchParams(window.location.search).get('sku_id');
       if (requestedId && items.some((item) => item.id === Number(requestedId))) setSkuId(requestedId);
-    }).catch((reason: unknown) => setError(reason instanceof Error ? reason.message : 'No se pudieron cargar los SKU.'))
-      .finally(() => setLoadingProducts(false));
+    } catch (reason: unknown) {
+      setError(reason instanceof Error ? reason.message : 'No se pudieron cargar los SKU. Comprueba tu conexión e inténtalo de nuevo.');
+    } finally {
+      setLoadingProducts(false);
+    }
   }, []);
+
+  useEffect(() => { void loadProducts(); }, [loadProducts]);
 
   const selected = products.find((item) => item.id === Number(skuId));
   const requestedQuantity = Number(quantity);
@@ -33,24 +42,31 @@ export default function OutboundPage() {
   const trackingRequired = exitType === 'dispatch';
 
   async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); setError(''); setSuccess('');
+    event.preventDefault(); setError(''); setSuccess(''); setRefreshWarning('');
     if (!selected) { setError('Selecciona un SKU válido.'); return; }
     if (!getUserUuid()) { setError('Falta el UUID del coordinador logístico que autoriza la salida. Cierra sesión y configúralo de nuevo.'); return; }
     if (requestedQuantity <= 0 || !Number.isInteger(requestedQuantity)) { setError('La cantidad debe ser un número entero mayor que cero.'); return; }
     if (insufficient) { setError(`Stock insuficiente: disponible ${selected.current_stock}, solicitado ${requestedQuantity}.`); return; }
     if (trackingRequired && !tracking.trim()) { setError('El número de seguimiento es obligatorio para un despacho.'); return; }
     setBusy(true);
+    let movementSaved = false;
     try {
       await inventoryApi.createOutbound({ sku_id: selected.id, quantity: requestedQuantity, exit_type: exitType, tracking_number: trackingRequired ? tracking.trim() : null, warehouse: selected.warehouse as Warehouse, user_uuid: getUserUuid() });
       setSuccess('Salida de stock registrada correctamente.'); setQuantity(''); setTracking('');
+      movementSaved = true;
     } catch (reason) { setError(reason instanceof Error ? reason.message : 'No se pudo registrar la salida de stock.'); }
-    finally { setBusy(false); }
+    if (!movementSaved) {
+      setBusy(false);
+      return;
+    }
     // A refresh failure must not report a failed StockExit after the POST succeeded.
     try {
       const updated = await inventoryApi.listSKUs();
       setProducts(updated);
     } catch {
-      // Keep the successful confirmation; the operator can reload to refresh stock.
+      setRefreshWarning('La salida se registró, pero no se pudo actualizar el stock mostrado. Vuelve a cargar los datos antes de registrar otra salida.');
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -62,7 +78,7 @@ export default function OutboundPage() {
       {insufficient && <Feedback kind="warning">La cantidad supera el stock actual ({selected?.current_stock} unidades). Reduce la cantidad para continuar.</Feedback>}
       <label className="block text-sm font-medium">Tipo de salida<select value={exitType} onChange={(event) => setExitType(event.target.value as ExitType)} className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5"><option value="dispatch">Despacho a cliente</option><option value="loss">Pérdida confirmada</option></select></label>
       {trackingRequired && <label className="block text-sm font-medium">Número de seguimiento del transportista<input required value={tracking} onChange={(event) => setTracking(event.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5" placeholder="1Z999AA10123456784" /></label>}
-      {error && <Feedback kind="error">{error}</Feedback>}{success && <Feedback kind="success">{success}</Feedback>}
+      {error && <div className="space-y-2"><Feedback kind="error">{error}</Feedback>{products.length === 0 && <button type="button" onClick={() => void loadProducts()} disabled={loadingProducts} className="rounded-lg border border-blue-700 px-4 py-2 text-sm font-semibold text-blue-700 disabled:opacity-50">{loadingProducts ? 'Cargando…' : 'Reintentar carga de SKU'}</button>}</div>}{success && <Feedback kind="success">{success}</Feedback>}{refreshWarning && <div className="space-y-2"><Feedback kind="warning">{refreshWarning}</Feedback><button type="button" onClick={() => { setRefreshWarning(''); void loadProducts(); }} disabled={loadingProducts} className="rounded-lg border border-blue-700 px-4 py-2 text-sm font-semibold text-blue-700 disabled:opacity-50">{loadingProducts ? 'Actualizando…' : 'Actualizar stock'}</button></div>}
       <button disabled={busy || loadingProducts || !selected || insufficient} className="rounded-lg bg-blue-700 px-5 py-3 font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50">{busy ? 'Guardando…' : loadingProducts ? 'Cargando SKU…' : 'Registrar salida de stock'}</button>
     </form>
   </div></ProtectedPage>;

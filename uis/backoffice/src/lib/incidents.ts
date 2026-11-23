@@ -38,6 +38,25 @@ function errorMessage(data: unknown): string | undefined {
   return undefined;
 }
 
+function safeError(status: number, details?: string): string {
+  if (status === 401) return 'Tu sesión ha caducado. Inicia sesión de nuevo e inténtalo otra vez.';
+  if (status === 403) return 'No tienes permiso para realizar esta acción.';
+  if (status === 404) return 'No hay resultados disponibles. Analiza primero un archivo CSV.';
+  if (status >= 500) return 'El servicio de análisis no está disponible ahora. Inténtalo más tarde.';
+  void details;
+  return 'No se pudo completar el análisis. Revisa el archivo e inténtalo de nuevo.';
+}
+
+async function responseError(response: Response): Promise<string> {
+  try { return safeError(response.status, errorMessage(await response.json())); }
+  catch { return safeError(response.status); }
+}
+
+async function readJson<T>(response: Response): Promise<T> {
+  try { return await response.json() as T; }
+  catch { throw new IncidentApiError(0, 'El servicio devolvió una respuesta inesperada. Actualiza la página e inténtalo de nuevo.'); }
+}
+
 function authHeaders(): Headers {
   const token = getAccessToken();
   if (!token) throw new IncidentApiError(401, 'No hay una sesión activa. Inicia sesión para continuar.');
@@ -59,14 +78,12 @@ export const incidentsApi = {
         cache: 'no-store',
       });
     } catch {
-      throw new IncidentApiError(0, `No se pudo conectar con la API (${API_BASE}). Comprueba que el backend esté ejecutándose.`);
+      throw new IncidentApiError(0, 'No se pudo conectar con el servicio de análisis. Comprueba tu conexión e inténtalo de nuevo.');
     }
     if (!response.ok) {
-      let message: string | undefined;
-      try { message = errorMessage(await response.json()); } catch { /* use status fallback */ }
-      throw new IncidentApiError(response.status, `Error ${response.status}: ${message || response.statusText}`);
+      throw new IncidentApiError(response.status, await responseError(response));
     }
-    return response.json() as Promise<IncidentAnalysis>;
+    return readJson<IncidentAnalysis>(response);
   },
 
   async downloadResults(): Promise<Blob> {
@@ -77,12 +94,10 @@ export const incidentsApi = {
         cache: 'no-store',
       });
     } catch {
-      throw new IncidentApiError(0, `No se pudo conectar con la API (${API_BASE}).`);
+      throw new IncidentApiError(0, 'No se pudo conectar con el servicio de análisis. Comprueba tu conexión e inténtalo de nuevo.');
     }
     if (!response.ok) {
-      let message: string | undefined;
-      try { message = errorMessage(await response.json()); } catch { /* use status fallback */ }
-      throw new IncidentApiError(response.status, `Error ${response.status}: ${message || response.statusText}`);
+      throw new IncidentApiError(response.status, await responseError(response));
     }
     return response.blob();
   },

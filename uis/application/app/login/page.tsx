@@ -32,14 +32,20 @@ export default function LoginPage() {
       });
       if (!response.ok) {
         if (response.status === 401) throw new Error('El token no es válido o ha caducado. Genera uno nuevo e inténtalo otra vez.');
-        const raw = await response.text();
-        throw new Error(`La API respondió ${response.status}${raw ? `: ${raw}` : '.'}`);
+        if (response.status === 403) throw new Error('No tienes permiso para acceder al backoffice. Contacta con el administrador.');
+        if (response.status >= 500) throw new Error('El servicio de autenticación no está disponible. Inténtalo de nuevo más tarde.');
+        throw new Error('No se pudo validar la sesión. Revisa los datos e inténtalo de nuevo.');
       }
 
-      saveSession(normalizedToken, normalizedUuid);
+      try {
+        saveSession(normalizedToken, normalizedUuid);
+      } catch {
+        setError('No se pudo guardar la sesión en este navegador. Habilita el almacenamiento del sitio e inténtalo de nuevo.');
+        return;
+      }
       router.replace('/backoffice/inventory/products');
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : `No se pudo conectar con la API (${API_BASE}). Comprueba que está en ejecución.`);
+      setError('No se pudo conectar con el servicio de autenticación. Comprueba tu conexión e inténtalo de nuevo.');
     } finally {
       setIsSubmitting(false);
     }

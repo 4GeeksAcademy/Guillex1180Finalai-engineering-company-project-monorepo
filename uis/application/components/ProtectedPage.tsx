@@ -2,20 +2,13 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { clearSession, getAccessToken } from '@/lib/auth';
+import { clearSession } from '@/lib/auth';
+import { useProtectedSession } from '@/lib/useProtectedSession';
+import { getAccessToken } from '@/lib/auth';
 
 export default function ProtectedPage({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    if (!getAccessToken()) {
-      router.replace('/login');
-      return;
-    }
-    setReady(true);
-  }, [router]);
+  const ready = useProtectedSession(getAccessToken);
 
   if (!ready) return <div className="p-8 text-sm text-slate-500">Verificando sesión…</div>;
 

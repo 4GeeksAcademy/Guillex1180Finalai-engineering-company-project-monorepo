@@ -51,25 +51,31 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   try {
     response = await fetch(`${API_BASE}${path}`, { ...init, headers, cache: 'no-store' });
   } catch {
-    throw new InventoryApiError(0, `No se pudo conectar con la API (${API_BASE}). Comprueba que el backend esté ejecutándose.`);
+    throw new InventoryApiError(0, 'No se pudo conectar con el servicio de inventario. Comprueba tu conexión e inténtalo de nuevo.');
   }
 
   if (!response.ok) {
-    const raw = await response.text().catch(() => '');
-    let message: string | undefined;
-    try {
-      const body: unknown = JSON.parse(raw);
-      if (body && typeof body === 'object') {
-        message = readableError(body);
-      }
-    } catch {
-      message = raw.trim() || undefined;
-    }
-    throw new InventoryApiError(response.status, `Error ${response.status}: ${message || response.statusText || 'No se recibió un mensaje de error.'}`);
+    let body: unknown;
+    try { body = await response.json(); } catch { /* Use a safe status fallback. */ }
+    const details = body && typeof body === 'object' ? readableError(body) : undefined;
+    const message = response.status === 401
+      ? 'Tu sesión ha caducado. Inicia sesión de nuevo e inténtalo otra vez.'
+      : response.status === 403
+        ? 'No tienes permiso para realizar esta acción.'
+        : response.status === 404
+          ? 'No se encontró el elemento solicitado. Actualiza la página e inténtalo de nuevo.'
+          : response.status >= 500
+            ? 'El servicio de inventario no está disponible ahora. Inténtalo más tarde.'
+            : 'No se pudo completar la solicitud. Revisa los datos e inténtalo de nuevo.';
+    throw new InventoryApiError(response.status, message);
   }
 
   if (response.status === 204) return undefined as T;
-  return response.json() as Promise<T>;
+  try {
+    return await response.json() as T;
+  } catch {
+    throw new InventoryApiError(0, 'El servicio devolvió una respuesta inesperada. Actualiza la página e inténtalo de nuevo.');
+  }
 }
 
 export const inventoryApi = {

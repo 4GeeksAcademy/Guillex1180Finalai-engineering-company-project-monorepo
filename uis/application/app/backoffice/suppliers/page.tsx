@@ -28,7 +28,9 @@ export default function SuppliersPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [refreshError, setRefreshError] = useState('');
   const [rowErrors, setRowErrors] = useState<Record<string, string>>({});
+  const [pendingRows, setPendingRows] = useState<Record<string, 'rate' | 'status' | undefined>>({});
 
   const loadSuppliers = useCallback(async () => {
     setLoading(true);
@@ -36,8 +38,10 @@ export default function SuppliersPage() {
     try {
       const result = await suppliersApi.list({ country: country || undefined, category: category || undefined });
       setSuppliers(result);
+      return true;
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'No se pudo cargar el directorio de proveedores.');
+      return false;
     } finally {
       setLoading(false);
     }
@@ -65,6 +69,7 @@ export default function SuppliersPage() {
     setSaving(true);
     setError('');
     setMessage('');
+    setRefreshError('');
     try {
       const payload: SupplierCreate = {
         ...form,
@@ -75,9 +80,12 @@ export default function SuppliersPage() {
         ...(form.notes?.trim() ? { notes: form.notes.trim() } : { notes: undefined }),
       };
       const created = await suppliersApi.create(payload);
-      setMessage(`Proveedor “${created.name}” registrado correctamente.`);
       setForm(blankForm);
-      await loadSuppliers();
+      if (await loadSuppliers()) setMessage(`Proveedor “${created.name}” registrado correctamente.`);
+      else {
+        setMessage(`Proveedor “${created.name}” creado correctamente.`);
+        setRefreshError('No se pudo actualizar el directorio. Reintenta la carga para ver los cambios.');
+      }
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'La API rechazó el proveedor. Revisa los campos e inténtalo de nuevo.');
     } finally {
@@ -93,6 +101,7 @@ export default function SuppliersPage() {
       setRowErrors((current) => ({ ...current, [supplier.id]: 'La tarifa debe ser un número mayor que cero.' }));
       return;
     }
+    setPendingRows((current) => ({ ...current, [supplier.id]: 'rate' }));
     try {
       const updated = await suppliersApi.updateRate(supplier.id, rate);
       setSuppliers((current) => current.map((item) => item.id === updated.id ? updated : item));
@@ -101,18 +110,23 @@ export default function SuppliersPage() {
       setMessage(`Tarifa de ${updated.name} actualizada.`);
     } catch (reason) {
       setRowErrors((current) => ({ ...current, [supplier.id]: reason instanceof Error ? reason.message : 'No se pudo actualizar la tarifa.' }));
+    } finally {
+      setPendingRows((current) => ({ ...current, [supplier.id]: undefined }));
     }
   }
 
   async function changeStatus(supplier: SupplierRecord) {
     const nextStatus: SupplierStatus = supplier.status === 'active' ? 'suspended' : 'active';
     setRowErrors((current) => ({ ...current, [supplier.id]: '' }));
+    setPendingRows((current) => ({ ...current, [supplier.id]: 'status' }));
     try {
       const updated = await suppliersApi.updateStatus(supplier.id, nextStatus);
       setSuppliers((current) => current.map((item) => item.id === updated.id ? updated : item));
       setMessage(`${updated.name} ahora está ${nextStatus === 'active' ? 'activo' : 'suspendido'}.`);
     } catch (reason) {
       setRowErrors((current) => ({ ...current, [supplier.id]: reason instanceof Error ? reason.message : 'No se pudo cambiar el estado.' }));
+    } finally {
+      setPendingRows((current) => ({ ...current, [supplier.id]: undefined }));
     }
   }
 
@@ -123,7 +137,7 @@ export default function SuppliersPage() {
       <p className="mt-2 max-w-3xl text-slate-600">Consulta y administra proveedores de USA y España, sus categorías, tarifas vigentes y estado operativo.</p>
     </div>
 
-    {error && <div className="mt-5"><Feedback kind="error">{error}</Feedback></div>}
+    {(error || refreshError) && <div className="mt-5 space-y-2"><Feedback kind="error">{refreshError || error}</Feedback><button type="button" onClick={() => { setRefreshError(''); void loadSuppliers(); }} disabled={loading} className="rounded-lg border border-blue-700 px-4 py-2 text-sm font-semibold text-blue-700 disabled:opacity-50">{loading ? 'Actualizando…' : 'Reintentar carga'}</button></div>}
     {message && <div className="mt-5"><Feedback kind="success">{message}</Feedback></div>}
 
     <section className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm" aria-labelledby="supplier-create-title">
@@ -178,9 +192,9 @@ export default function SuppliersPage() {
                     <td className="px-4 py-4"><div className={`font-semibold ${supplier.status === 'active' ? 'text-slate-900' : 'text-slate-600'}`}>{supplier.name}</div>{supplier.service_zone && <div className="mt-1 text-xs">{supplier.service_zone}</div>}</td>
                     <td className="px-4 py-4">{supplier.country}</td>
                     <td className="px-4 py-4"><div className="flex max-w-md flex-wrap gap-1">{supplier.categories.map((item) => <span key={item} className="rounded bg-blue-50 px-2 py-1 text-xs font-medium text-blue-800">{formatCategory(item)}</span>)}</div></td>
-                    <td className="px-4 py-4"><div className="flex items-center gap-2"><input aria-label={`Nueva tarifa para ${supplier.name}`} type="number" min="0.000001" step="any" value={rateDrafts[supplier.id] ?? supplier.rate_per_shipment} onChange={(event) => setRateDrafts((current) => ({ ...current, [supplier.id]: event.target.value }))} className="w-28 rounded border border-slate-300 px-2 py-1 text-slate-900" /><span>{supplier.currency}</span><button type="button" onClick={() => void saveRate(supplier)} className="rounded border border-blue-700 px-2 py-1 text-xs font-semibold text-blue-800 hover:bg-blue-50">Guardar</button></div>{rowErrors[supplier.id] && <p className="mt-1 max-w-xs text-xs text-red-700">{rowErrors[supplier.id]}</p>}</td>
+                    <td className="px-4 py-4"><div className="flex items-center gap-2"><input aria-label={`Nueva tarifa para ${supplier.name}`} type="number" min="0.000001" step="any" value={rateDrafts[supplier.id] ?? supplier.rate_per_shipment} onChange={(event) => setRateDrafts((current) => ({ ...current, [supplier.id]: event.target.value }))} className="w-28 rounded border border-slate-300 px-2 py-1 text-slate-900" /><span>{supplier.currency}</span><button type="button" onClick={() => void saveRate(supplier)} disabled={pendingRows[supplier.id] !== undefined} className="rounded border border-blue-700 px-2 py-1 text-xs font-semibold text-blue-800 hover:bg-blue-50 disabled:opacity-50">{pendingRows[supplier.id] === 'rate' ? 'Guardando…' : 'Guardar'}</button></div>{rowErrors[supplier.id] && <p role="alert" className="mt-1 max-w-xs text-xs text-red-700">{rowErrors[supplier.id]}</p>}</td>
                     <td className="px-4 py-4"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${supplier.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900'}`}>{supplier.status === 'active' ? 'Activo' : 'Suspendido'}</span></td>
-                    <td className="px-4 py-4"><button type="button" onClick={() => void changeStatus(supplier)} className={`whitespace-nowrap rounded-lg px-3 py-2 text-xs font-semibold ${supplier.status === 'active' ? 'border border-amber-600 text-amber-900 hover:bg-amber-50' : 'bg-emerald-700 text-white hover:bg-emerald-800'}`}>{supplier.status === 'active' ? 'Suspender' : 'Activar'}</button></td>
+                    <td className="px-4 py-4"><button type="button" onClick={() => void changeStatus(supplier)} disabled={pendingRows[supplier.id] !== undefined} className={`whitespace-nowrap rounded-lg px-3 py-2 text-xs font-semibold disabled:opacity-50 ${supplier.status === 'active' ? 'border border-amber-600 text-amber-900 hover:bg-amber-50' : 'bg-emerald-700 text-white hover:bg-emerald-800'}`}>{pendingRows[supplier.id] === 'status' ? 'Actualizando…' : supplier.status === 'active' ? 'Suspender' : 'Activar'}</button></td>
                   </tr>)}
             </tbody>
           </table>

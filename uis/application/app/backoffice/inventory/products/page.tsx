@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Feedback from '@/components/Feedback';
 import ProtectedPage from '@/components/ProtectedPage';
 import { inventoryApi } from '@/lib/inventory';
@@ -12,9 +12,19 @@ export default function ProductsPage() {
 	const [error, setError] = useState('');
 	const [loading, setLoading] = useState(true);
 
-	useEffect(() => {
-		inventoryApi.listSKUs().then(setProducts).catch((reason: unknown) => setError(reason instanceof Error ? reason.message : 'No se pudieron cargar los SKUs.')).finally(() => setLoading(false));
+	const loadProducts = useCallback(async () => {
+		setLoading(true);
+		setError('');
+		try {
+			setProducts(await inventoryApi.listSKUs());
+		} catch (reason: unknown) {
+			setError(reason instanceof Error ? reason.message : 'No se pudieron cargar los SKUs. Comprueba tu conexión e inténtalo de nuevo.');
+		} finally {
+			setLoading(false);
+		}
 	}, []);
+
+	useEffect(() => { void loadProducts(); }, [loadProducts]);
 
 	return <ProtectedPage>
 		<div className="flex flex-wrap items-end justify-between gap-4">
@@ -22,7 +32,7 @@ export default function ProductsPage() {
 			<div className="flex gap-2"><Link className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-100" href="/backoffice/inventory/orders">Ver historial de movimientos</Link><Link className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800" href="/backoffice/inventory/orders/inbound">Registrar recepción</Link></div>
 		</div>
 		<div className="mt-6 space-y-4">
-			{error && <Feedback kind="error">{error}</Feedback>}
+			{error && <div className="space-y-2"><Feedback kind="error">{error}</Feedback><button type="button" onClick={() => void loadProducts()} disabled={loading} className="rounded-lg border border-blue-700 px-4 py-2 text-sm font-semibold text-blue-700 disabled:opacity-50">{loading ? 'Actualizando…' : 'Reintentar'}</button></div>}
 			{loading ? <p className="text-slate-500">Cargando inventario…</p> : products.length === 0 && !error ? <p className="rounded-xl border border-slate-200 bg-white p-6 text-slate-600">No hay SKUs registrados.</p> : <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
 				<div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="bg-slate-100 text-xs uppercase text-slate-600"><tr><th className="px-4 py-3">SKU / descripción</th><th className="px-4 py-3">Marca cliente</th><th className="px-4 py-3">Categoría</th><th className="px-4 py-3">Almacén</th><th className="px-4 py-3">Stock actual</th><th className="px-4 py-3">Movimientos</th></tr></thead><tbody className="divide-y divide-slate-100">{products.map((product) => {
 					// UX thresholds: 0 unidades es agotado, 1-9 bajo y 10+ saludable.

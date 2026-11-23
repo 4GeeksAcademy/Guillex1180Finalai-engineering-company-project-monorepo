@@ -1,11 +1,14 @@
-"""
-Safe snippet for basic pandas cleaning. Copy and adapt for your dataset.
-Run: python pandas_clean.py  (ensure pandas is installed)
-"""
+"""Safe snippet for basic pandas cleaning; read/parse failures exit with code 2."""
+import sys
+
 import pandas as pd
 
 # Load (adjust path and kwargs as needed)
-df = pd.read_csv("data.csv")  # or read_json, read_excel
+try:
+    df = pd.read_csv("data.csv")  # or read_json, read_excel
+except (OSError, pd.errors.ParserError, UnicodeError):
+    print("Could not read data.csv. Check that the file exists, is readable, and is a valid CSV.", file=sys.stderr)
+    raise SystemExit(2)
 print("df_shape", df.shape)
 print("df_dtypes", df.dtypes)
 

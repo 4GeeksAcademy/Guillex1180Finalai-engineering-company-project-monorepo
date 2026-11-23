@@ -35,10 +35,12 @@ export default function StatusControls({
   onStageChange,
 }: StatusControlsProps) {
   const [updating, setUpdating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleUpdate = useCallback(
     async (field: 'status' | 'stage', value: string) => {
       setUpdating(true);
+      setError(null);
       try {
         await updateCandidate(recordId, { [field]: value });
         if (field === 'status') {
@@ -47,7 +49,7 @@ export default function StatusControls({
           onStageChange(value as CandidateStage);
         }
       } catch (err) {
-        alert(err instanceof Error ? err.message : 'Error al actualizar');
+        setError(err instanceof Error ? err.message : 'No se pudo actualizar. Inténtalo de nuevo.');
       } finally {
         setUpdating(false);
       }
@@ -100,6 +102,7 @@ export default function StatusControls({
         </div>
       </div>
       {updating && <p className="text-xs text-blue-600 mt-2">Actualizando…</p>}
+      {error && <p role="alert" className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
     </div>
   );
 }

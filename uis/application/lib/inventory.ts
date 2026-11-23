@@ -21,25 +21,6 @@ export class InventoryApiError extends Error {
   }
 }
 
-function readableError(value: unknown): string | undefined {
-  if (typeof value === 'string') return value;
-  if (Array.isArray(value)) {
-    const messages = value.map((item) => {
-      if (!item || typeof item !== 'object') return readableError(item);
-      const error = item as { loc?: unknown[]; msg?: unknown; message?: unknown };
-      const message = readableError(error.msg ?? error.message);
-      return message ? `${Array.isArray(error.loc) ? `${error.loc.slice(1).join('.')}: ` : ''}${message}` : undefined;
-    }).filter((item): item is string => Boolean(item));
-    return messages.length ? messages.join('; ') : undefined;
-  }
-  if (value && typeof value === 'object') {
-    const body = value as { detail?: unknown; message?: unknown; error?: unknown; msg?: unknown };
-    const direct = readableError(body.detail ?? body.message ?? body.error ?? body.msg);
-    if (direct) return direct;
-  }
-  return undefined;
-}
-
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = getAccessToken();
   if (!token) throw new InventoryApiError(401, 'No hay una sesión activa. Inicia sesión para continuar.');
@@ -51,25 +32,28 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   try {
     response = await fetch(`${API_BASE}${path}`, { ...init, headers, cache: 'no-store' });
   } catch {
-    throw new InventoryApiError(0, `No se pudo conectar con la API (${API_BASE}). Comprueba que el backend esté ejecutándose.`);
+    throw new InventoryApiError(0, 'No se pudo conectar con el servicio de inventario. Comprueba tu conexión e inténtalo de nuevo.');
   }
 
   if (!response.ok) {
-    const raw = await response.text().catch(() => '');
-    let message: string | undefined;
-    try {
-      const body: unknown = JSON.parse(raw);
-      if (body && typeof body === 'object') {
-        message = readableError(body);
-      }
-    } catch {
-      message = raw.trim() || undefined;
-    }
-    throw new InventoryApiError(response.status, `Error ${response.status}: ${message || response.statusText || 'No se recibió un mensaje de error.'}`);
+    const message = response.status === 401
+      ? 'Tu sesión ha caducado. Inicia sesión de nuevo e inténtalo otra vez.'
+      : response.status === 403
+        ? 'No tienes permiso para realizar esta acción.'
+        : response.status === 404
+          ? 'No se encontró el elemento solicitado. Actualiza la página e inténtalo de nuevo.'
+          : response.status >= 500
+            ? 'El servicio de inventario no está disponible en este momento. Inténtalo de nuevo más tarde.'
+            : 'No se pudo completar la solicitud. Revisa los datos e inténtalo de nuevo.';
+    throw new InventoryApiError(response.status, message);
   }
 
   if (response.status === 204) return undefined as T;
-  return response.json() as Promise<T>;
+  try {
+    return await response.json() as T;
+  } catch {
+    throw new InventoryApiError(0, 'El servicio devolvió una respuesta inesperada. Actualiza la página e inténtalo de nuevo.');
+  }
 }
 
 export const inventoryApi = {

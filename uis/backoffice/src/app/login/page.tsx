@@ -17,7 +17,12 @@ export default function LoginPage() {
       setError('Introduce el token de acceso emitido por el sistema de autenticación de TrackFlow.');
       return;
     }
-    saveSession(token, userUuid);
+    try {
+      saveSession(token, userUuid);
+    } catch {
+      setError('No se pudo guardar la sesión en este navegador. Habilita el almacenamiento del sitio e inténtalo de nuevo.');
+      return;
+    }
     router.replace('/backoffice/inventory/products');
   }
 

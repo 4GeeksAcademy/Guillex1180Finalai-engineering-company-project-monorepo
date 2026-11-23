@@ -33,8 +33,18 @@ async def analyze_incidents(
         content = await file.read()
         records = parse_incident_csv(content)
     except ValueError as exc:
+        # The parser emits controlled validation messages (never source row
+        # contents); keep any unexpected ValueError generic at the API edge.
+        detail = str(exc) if str(exc) in {
+            "El fichero CSV está vacío.",
+            "El fichero debe estar codificado en UTF-8.",
+            "El fichero CSV no contiene una fila de encabezados.",
+            "El CSV no contiene registros para analizar.",
+            "No se pudo interpretar el formato CSV.",
+            "El CSV tiene filas con más columnas que el encabezado.",
+        } or str(exc).startswith("Faltan columnas obligatorias: ") else "No se pudo validar el archivo CSV."
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+            status_code=status.HTTP_400_BAD_REQUEST, detail=detail) from exc
     finally:
         await file.close()
 

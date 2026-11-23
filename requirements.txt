@@ -7,7 +7,6 @@ six==1.17.0
 urllib3==2.8.0
 fastapi>=0.115,<1.0
 libpass[bcrypt]>=1.9.4
-passlib[bcrypt]>=1.7.4,<2.0
 psycopg[binary]>=3.3.9
 python-dotenv>=1.0,<2.0
 python-jose[cryptography]>=3.5.0

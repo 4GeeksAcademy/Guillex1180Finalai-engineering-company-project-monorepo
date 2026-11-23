@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Feedback from '@/components/Feedback';
 import ProtectedPage from '@/components/ProtectedPage';
 import { inventoryApi } from '@/lib/inventory';
@@ -17,12 +17,20 @@ export default function OrdersPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    inventoryApi.listOrders()
-      .then((items) => setOrders([...items].sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))))
-      .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : 'No se pudo cargar el historial.'))
-      .finally(() => setLoading(false));
+  const loadOrders = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const items = await inventoryApi.listOrders();
+      setOrders([...items].sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at)));
+    } catch (reason: unknown) {
+      setError(reason instanceof Error ? reason.message : 'No se pudo cargar el historial. Comprueba tu conexión e inténtalo de nuevo.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => { void loadOrders(); }, [loadOrders]);
 
   return (
     <ProtectedPage>
@@ -31,7 +39,7 @@ export default function OrdersPage() {
         <h1 className="mt-1 text-3xl font-bold">Historial de movimientos de stock</h1>
         <p className="mt-2 text-slate-600">Vista de solo lectura de las recepciones de mercancía y los despachos o pérdidas de TrackFlow.</p>
         <div className="mt-6 space-y-4">
-          {error && <Feedback kind="error">{error}</Feedback>}
+          {error && <div className="space-y-2"><Feedback kind="error">{error}</Feedback><button type="button" onClick={() => void loadOrders()} disabled={loading} className="rounded-lg border border-blue-700 px-4 py-2 text-sm font-semibold text-blue-700 disabled:opacity-50">{loading ? 'Actualizando…' : 'Reintentar'}</button></div>}
           {loading ? <p className="text-slate-500">Cargando órdenes…</p> : orders.length === 0 && !error ? (
             <p className="rounded-xl border border-slate-200 bg-white p-6 text-slate-600">No hay movimientos de stock registrados.</p>
           ) : !loading && orders.length > 0 ? (

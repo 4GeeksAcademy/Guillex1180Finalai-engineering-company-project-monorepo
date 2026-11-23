@@ -28,7 +28,9 @@ def register_user(data: UserCreate) -> dict[str, Any]:
         return create_user(data)
     except DuplicateEmailError as exc:
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+            status_code=status.HTTP_409_CONFLICT,
+            detail="An account with this email already exists",
+        ) from exc
 
 
 @router.get("", response_model=list[UserRead])
@@ -48,7 +50,9 @@ def put_my_user(data: UserSelfUpdate, current_user: CurrentUser) -> dict[str, An
         updated = update_user(current_user["id"], data)
     except DuplicateEmailError as exc:
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+            status_code=status.HTTP_409_CONFLICT,
+            detail="An account with this email already exists",
+        ) from exc
     if updated is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
@@ -89,7 +93,9 @@ def put_user(
         updated = update_user(user_id, data)
     except DuplicateEmailError as exc:
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+            status_code=status.HTTP_409_CONFLICT,
+            detail="An account with this email already exists",
+        ) from exc
     if updated is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found")

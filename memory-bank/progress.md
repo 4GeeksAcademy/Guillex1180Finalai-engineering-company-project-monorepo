@@ -100,3 +100,11 @@
 - ✅ Verificados 28 tests de Python, typecheck y build de las tres apps; npm audit de dependencias de producción sin vulnerabilidades.
 - ⚠️ Next.js advierte que React 18 dejará de ser compatible en Next 17. Mantener React 18 evita un cambio mayor de dependencias sin validación específica.
 - ⚠️ Los artefactos `uis/backoffice/.next` ya estaban rastreados por Git y su estado incluye cambios previos; no se eliminaron ni alteró el índice.
+
+## HITO 8 — Autenticación y protección de rutas
+
+- ✅ Usuarios y perfiles se guardan exclusivamente en TinyDB; SQLModel crea solo las tablas del inventario (SKU, entradas y salidas). El `user_uuid` de movimientos procede del ID autenticado de TinyDB.
+- ✅ CRUD de credenciales `/users`, perfiles `/profiles/me`, registro y login JWT `/auth`; los roles están limitados a `admin`, `manager` y `user`, y los registros nuevos reciben `user` por defecto.
+- ✅ Contraseñas hasheadas con bcrypt mediante `libpass[bcrypt]`; se eliminó la dependencia redundante y no mantenida `passlib[bcrypt]` del manifiesto `requirements.txt` (el import compatible `passlib.hash` lo proporciona libpass).
+- ✅ La expiración y la clave JWT se configuran por entorno; los endpoints protegidos de usuarios, perfiles, proveedores, inventario e incidencias validan token, y las comprobaciones de propiedad responden 403.
+- ✅ Verificación ejecutada: `python -m unittest discover -s tests -v` (20/20) y `python -m pytest -q tests/test_auth_01.py` (8/8). La prueba parametrizada cubre rutas protegidas con token ausente, inválido, alterado y expirado; advertencia deprecada de Starlette/httpx sin fallo.

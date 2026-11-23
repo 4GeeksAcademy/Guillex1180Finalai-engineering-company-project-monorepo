@@ -72,6 +72,7 @@ export default function IncidentsAnalysisPage() {
       link.click();
       link.remove();
       URL.revokeObjectURL(href);
+      setMessage('Descarga iniciada: incidents-results.csv.');
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'No se pudo descargar el CSV.');
     } finally {

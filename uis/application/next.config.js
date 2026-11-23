@@ -9,7 +9,7 @@ const nextConfig = {
 		return [
 			{
 				source: '/trackflow-api/:path*',
-				destination: `${(process.env.TRACKFLOW_API_URL || 'http://127.0.0.1:8000').replace(/\/$/, '')}/:path*`,
+				destination: `${(process.env.TRACKFLOW_API_URL || process.env.NEXT_TRACKFLOW_API_URL || 'http://127.0.0.1:8000').replace(/\/$/, '')}/:path*`,
 			},
 		];
 	},
