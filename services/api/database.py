@@ -28,6 +28,12 @@ def _database_url() -> str:
     _load_dotenv_if_present()
     supabase_url = os.getenv("SUPABASE_DATABASE_URL", "").strip()
     if supabase_url:
+        # The standard PostgreSQL URL defaults to psycopg2 in SQLAlchemy.
+        # Railway installs psycopg v3, so select that driver explicitly.
+        if supabase_url.startswith("postgresql://"):
+            return supabase_url.replace(
+                "postgresql://", "postgresql+psycopg://", 1
+            )
         return supabase_url
     return os.getenv("INVENTORY_DATABASE_URL", "sqlite:///./data/trackflow_inventory.db")
 
