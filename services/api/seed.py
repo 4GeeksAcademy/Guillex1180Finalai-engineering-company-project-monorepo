@@ -8,7 +8,8 @@ from sqlmodel import Session, select
 from tinydb import TinyDB
 
 from services.api.database import _tinydb_path, create_db_and_tables, engine
-from services.api.models import SKU, StockEntry, StockExit
+from services.api.models import InventoryAudit, InventoryClient, SKU, StockEntry, StockExit
+from services.api.telemetry import event_id_for, record_event
 from services.api.models import SupplierCreate
 
 USER_UUID = "00000000-0000-4000-8000-000000000001"
@@ -26,6 +27,14 @@ PRODUCTS = [
         "client_name": "UrbanThread", "category": "fashion", "warehouse": "LA"},
     {"name": "Cargador rápido USB-C 65W", "sku": "TEC-CHG-065",
         "client_name": "SoundWave Electronics", "category": "electronics", "warehouse": "ZGZ"},
+    {"name": "Vestido midi terracota", "sku": "URB-DRS-021",
+        "client_name": "UrbanThread", "category": "fashion", "warehouse": "ZGZ"},
+    {"name": "Crema solar SPF50", "sku": "GLW-SPF-050",
+        "client_name": "GlowLab Cosmetics", "category": "cosmetics", "warehouse": "LA"},
+    {"name": "Auriculares compactos", "sku": "SND-EAR-010",
+        "client_name": "SoundWave Electronics", "category": "electronics", "warehouse": "ZGZ"},
+    {"name": "Sudadera básica negra", "sku": "PST-HOD-BLK",
+        "client_name": "PureStep Footwear", "category": "fashion", "warehouse": "LA"},
 ]
 
 ENTRIES = [
@@ -36,6 +45,17 @@ ENTRIES = [
     ("CSM-SRM-030", 20, "GR-ZGZ-0178", "ZGZ"),
     ("CLT-CHN-N-32", 9, "PO-2024-0104", "LA"),
     ("TEC-CHG-065", 14, "PO-2024-0105", "ZGZ"),
+    ("URB-DRS-021", 18, "PO-2024-0106", "ZGZ"),
+    ("GLW-SPF-050", 16, "PO-2024-0107", "LA"),
+    ("SND-EAR-010", 11, "PO-2024-0108", "ZGZ"),
+    ("PST-HOD-BLK", 13, "PO-2024-0109", "LA"),
+    ("CLT-SNK-W-42", 10, "PO-2024-0110", "LA"),
+    ("TEC-EAR-001", 9, "PO-2024-0111", "LA"),
+    ("CSM-SRM-030", 12, "PO-2024-0112", "ZGZ"),
+    ("URB-DRS-021", 7, "PO-2024-0113", "ZGZ"),
+    ("GLW-SPF-050", 8, "PO-2024-0114", "LA"),
+    ("SND-EAR-010", 6, "PO-2024-0115", "ZGZ"),
+    ("PST-HOD-BLK", 5, "PO-2024-0116", "LA"),
 ]
 
 EXITS = [
@@ -43,6 +63,22 @@ EXITS = [
     ("CLT-SNK-W-42-Z", 3, "dispatch", "1Z999AA10123456785", "ZGZ"),
     ("TEC-EAR-001", 2, "loss", None, "LA"),
     ("CSM-SRM-030", 1, "loss", None, "ZGZ"),
+    ("URB-DRS-021", 4, "dispatch", "DEMO-OUT-005", "ZGZ"),
+    ("GLW-SPF-050", 3, "dispatch", "DEMO-OUT-006", "LA"),
+    ("SND-EAR-010", 2, "dispatch", "DEMO-OUT-007", "ZGZ"),
+    ("PST-HOD-BLK", 3, "dispatch", "DEMO-OUT-008", "LA"),
+    ("CLT-SNK-W-42", 4, "dispatch", "DEMO-OUT-009", "LA"),
+    ("TEC-EAR-001", 3, "dispatch", "DEMO-OUT-010", "LA"),
+    ("CSM-SRM-030", 5, "dispatch", "DEMO-OUT-011", "ZGZ"),
+    ("URB-DRS-021", 6, "dispatch", "DEMO-OUT-012", "ZGZ"),
+    ("GLW-SPF-050", 7, "dispatch", "DEMO-OUT-013", "LA"),
+    ("SND-EAR-010", 4, "dispatch", "DEMO-OUT-014", "ZGZ"),
+    ("PST-HOD-BLK", 2, "dispatch", "DEMO-OUT-015", "LA"),
+    ("TEC-CHG-065", 3, "dispatch", "DEMO-OUT-016", "ZGZ"),
+    ("CLT-SNK-W-42-Z", 5, "dispatch", "DEMO-OUT-017", "ZGZ"),
+    ("TEC-EAR-001", 4, "dispatch", "DEMO-OUT-018", "LA"),
+    ("CSM-SRM-030", 6, "dispatch", "DEMO-OUT-019", "ZGZ"),
+    ("URB-DRS-021", 3, "dispatch", "DEMO-OUT-020", "ZGZ"),
 ]
 
 SUPPLIERS_SEED = [
@@ -119,10 +155,44 @@ def seed() -> int:
             sku = session.exec(select(SKU).where(
                 SKU.sku == product["sku"])).first()
             if sku is None:
-                sku = SKU.model_validate(product)
+                normalized_name = " ".join(
+                    product["client_name"].strip().casefold().split())
+                client = session.exec(
+                    select(InventoryClient).where(
+                        InventoryClient.normalized_name == normalized_name
+                    )
+                ).first()
+                if client is None:
+                    client = InventoryClient(
+                        name=product["client_name"], normalized_name=normalized_name
+                    )
+                    session.add(client)
+                    session.flush()
+                sku = SKU.model_validate({**product, "client_id": client.id})
+                sku.threshold_quantity = 22 if product["sku"] == "CLT-SNK-W-42" else (
+                    20 if product["sku"] == "GLW-SPF-050" else None
+                )
                 session.add(sku)
                 session.flush()
                 inserted_skus += 1
+            elif sku.client_id is None:
+                normalized_name = " ".join(
+                    sku.client_name.strip().casefold().split())
+                client = session.exec(
+                    select(InventoryClient).where(
+                        InventoryClient.normalized_name == normalized_name
+                    )
+                ).first()
+                if client is None:
+                    client = InventoryClient(
+                        name=sku.client_name, normalized_name=normalized_name)
+                    session.add(client)
+                    session.flush()
+                sku.client_id = client.id
+                session.add(sku)
+            if sku.sku in {"CLT-SNK-W-42", "GLW-SPF-050"} and sku.threshold_quantity is None:
+                sku.threshold_quantity = 22 if sku.sku == "CLT-SNK-W-42" else 20
+                session.add(sku)
             sku_by_code[product["sku"]] = sku
 
         for code, quantity, reference, warehouse in ENTRIES:
@@ -135,10 +205,23 @@ def seed() -> int:
                 )
             ).first()
             if existing is None:
-                session.add(StockEntry(sku_id=int(sku.id), quantity=quantity,
-                            reference=reference, warehouse=warehouse, user_uuid=USER_UUID))
+                entry = StockEntry(sku_id=int(sku.id), quantity=quantity,
+                                   reference=reference, warehouse=warehouse, user_uuid=USER_UUID)
+                session.add(entry)
+                session.flush()
+                session.add(_seed_event(
+                    session,
+                    "inbound_order_created",
+                    {
+                        **_seed_dimensions(sku, warehouse),
+                        "quantity": quantity,
+                        "order_id": str(entry.id),
+                    },
+                    event_id_for("inbound_order_created", entry.id),
+                ))
                 inserted_entries += 1
 
+        session.flush()
         for code, quantity, exit_type, tracking_number, warehouse in EXITS:
             sku = sku_by_code[code]
             existing = session.exec(
@@ -150,9 +233,68 @@ def seed() -> int:
                 )
             ).first()
             if existing is None:
-                session.add(StockExit(sku_id=int(sku.id), quantity=quantity, exit_type=exit_type,
-                            tracking_number=tracking_number, warehouse=warehouse, user_uuid=USER_UUID))
+                before = _stock_for_seed(session, int(sku.id), warehouse)
+                exit_record = StockExit(sku_id=int(sku.id), quantity=quantity, exit_type=exit_type,
+                                        tracking_number=tracking_number, warehouse=warehouse,
+                                        user_uuid=USER_UUID)
+                session.add(exit_record)
+                session.flush()
+                session.add(_seed_event(
+                    session,
+                    "outbound_order_created",
+                    {
+                        **_seed_dimensions(sku, warehouse),
+                        "quantity": quantity,
+                        "order_id": str(exit_record.id),
+                    },
+                    event_id_for("outbound_order_created", exit_record.id),
+                ))
+                threshold = sku.threshold_quantity
+                after = before - quantity
+                if threshold is not None and before >= threshold and after < threshold:
+                    session.add(_seed_event(
+                        session,
+                        "stock_threshold_triggered",
+                        {
+                            **_seed_dimensions(sku, warehouse),
+                            "quantity": after,
+                            "threshold_quantity": threshold,
+                        },
+                        event_id_for("stock_threshold_triggered",
+                                     exit_record.id),
+                    ))
                 inserted_exits += 1
+
+        # A synthetic count provides a reproducible discrepancy example without
+        # changing the ledger or running automatically at API startup.
+        sku = sku_by_code["TEC-EAR-001"]
+        existing_audit = session.exec(
+            select(InventoryAudit).where(
+                InventoryAudit.sku_id == sku.id,
+                InventoryAudit.user_uuid == USER_UUID,
+            )
+        ).first()
+        if existing_audit is None:
+            system_quantity = _stock_for_seed(
+                session, int(sku.id), sku.warehouse)
+            audit = InventoryAudit(
+                sku_id=int(sku.id), warehouse=sku.warehouse,
+                system_quantity=system_quantity, physical_quantity=system_quantity + 2,
+                user_uuid=USER_UUID,
+            )
+            session.add(audit)
+            session.flush()
+            session.add(_seed_event(
+                session,
+                "inventory_discrepancy_detected",
+                {
+                    **_seed_dimensions(sku, sku.warehouse),
+                    "quantity": 2,
+                    "discrepancy_direction": "physical_higher",
+                    "audit_id": audit.id,
+                },
+                event_id_for("inventory_discrepancy_detected", audit.id),
+            ))
         session.commit()
     inserted_suppliers = seed_suppliers()
     print(
@@ -161,6 +303,47 @@ def seed() -> int:
         f"{inserted_exits} exits, {inserted_suppliers} suppliers inserted)."
     )
     return inserted_suppliers
+
+
+def _seed_dimensions(sku: SKU, warehouse: str) -> dict[str, str]:
+    warehouse_values = {"LA": "los_angeles", "ZGZ": "zaragoza"}
+    category_values = {
+        "fashion": "moda",
+        "electronics": "electrónica",
+        "cosmetics": "cosmética",
+    }
+    assert sku.client_id is not None
+    return {
+        "warehouse": warehouse_values[warehouse],
+        "client_id": sku.client_id,
+        "product_id": str(sku.id),
+        "product_category": category_values[sku.category],
+    }
+
+
+def _seed_event(session: Session, event_type: str, properties: dict[str, object], event_id: str):
+    return record_event(
+        session,
+        event_type=event_type,
+        properties=properties,
+        delivery="stream",
+        event_id=event_id,
+        user_id=USER_UUID,
+    )
+
+
+def _stock_for_seed(session: Session, sku_id: int, warehouse: str) -> int:
+    entries = session.exec(
+        select(StockEntry.quantity).where(
+            StockEntry.sku_id == sku_id, StockEntry.warehouse == warehouse
+        )
+    ).all()
+    exits = session.exec(
+        select(StockExit.quantity).where(
+            StockExit.sku_id == sku_id, StockExit.warehouse == warehouse
+        )
+    ).all()
+    return sum(entries) - sum(exits)
 
 
 if __name__ == "__main__":

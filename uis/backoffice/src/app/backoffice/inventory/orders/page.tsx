@@ -70,8 +70,8 @@ export default function OrdersPage() {
                             </span>
                           </td>
                           <td className="px-4 py-4">
-                            <div className="font-medium">{order.sku?.name ?? order.sku_code ?? `SKU ${order.sku_id}`}</div>
-                            {(order.sku?.sku ?? order.sku_code) && <div className="mt-1 font-mono text-xs text-slate-500">{order.sku?.sku ?? order.sku_code}</div>}
+                            <div className="font-medium">{order.sku_name}</div>
+                            <div className="mt-1 font-mono text-xs text-slate-500">{order.sku_code}</div>
                           </td>
                           <td className="px-4 py-4 font-semibold">{order.quantity}</td>
                           <td className="px-4 py-4">{order.warehouse}</td>

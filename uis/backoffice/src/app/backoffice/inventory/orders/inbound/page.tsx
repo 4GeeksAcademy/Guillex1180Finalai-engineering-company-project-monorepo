@@ -4,7 +4,6 @@ import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Feedback from '@/components/Feedback';
 import ProtectedPage from '@/components/ProtectedPage';
-import { getUserUuid } from '@/lib/auth';
 import { inventoryApi } from '@/lib/inventory';
 import type { SKU, Warehouse } from '@/lib/types';
 
@@ -43,10 +42,9 @@ export default function InboundPage() {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setError(''); setSuccess('');
     if (!selected) { setError('Selecciona un SKU válido.'); return; }
-    if (!getUserUuid()) { setError('Falta el UUID del operario de almacén. Cierra sesión y configúralo de nuevo.'); return; }
     setBusy(true);
     try {
-      await inventoryApi.createInbound({ sku_id: selected.id, quantity: Number(quantity), reference: reference.trim(), warehouse, user_uuid: getUserUuid() });
+      await inventoryApi.createInbound({ sku_id: selected.id, quantity: Number(quantity), reference: reference.trim(), warehouse });
       setSuccess('Recepción de mercancía registrada correctamente.'); setSkuId(''); setQuantity(''); setReference(''); setWarehouse('LA');
       router.refresh();
     } catch (reason) { setError(reason instanceof Error ? reason.message : 'No se pudo registrar la entrada.'); }

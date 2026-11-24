@@ -6,7 +6,9 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException, status
 
-from services.api.models import UserCreate, UserRead, UserSelfUpdate, UserUpdate
+from services.api.models import (
+    RegistrationResponse, UserCreate, UserRead, UserSelfUpdate, UserUpdate,
+)
 from services.api.security import CurrentUser
 from services.api.users import (
     DuplicateEmailError,
@@ -21,11 +23,13 @@ from services.api.users import (
 router = APIRouter(prefix="/users", tags=["users"])
 
 
-@router.post("", response_model=UserRead, status_code=status.HTTP_201_CREATED)
-def register_user(data: UserCreate) -> dict[str, Any]:
+@router.post("", response_model=RegistrationResponse, status_code=status.HTTP_201_CREATED)
+def register_user(data: UserCreate) -> RegistrationResponse:
     """Public registration; the service always assigns the ``user`` role."""
     try:
-        return create_user(data)
+        user = create_user(data)
+        return RegistrationResponse(
+            id=user["id"], role=user["role"], created_at=user["created_at"])
     except DuplicateEmailError as exc:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -102,7 +106,7 @@ def put_user(
     return updated
 
 
-@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{user_id}", response_model=None, status_code=status.HTTP_204_NO_CONTENT)
 def remove_user(user_id: str, current_user: CurrentUser) -> None:
     existing = get_user_by_id(user_id)
     if existing is None or not existing.get("email"):

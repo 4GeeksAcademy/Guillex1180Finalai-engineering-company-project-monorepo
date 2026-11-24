@@ -3,7 +3,6 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import Feedback from '@/components/Feedback';
 import ProtectedPage from '@/components/ProtectedPage';
-import { getUserUuid } from '@/lib/auth';
 import { inventoryApi } from '@/lib/inventory';
 import type { ExitType, SKU, Warehouse } from '@/lib/types';
 
@@ -44,14 +43,13 @@ export default function OutboundPage() {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setError(''); setSuccess(''); setRefreshWarning('');
     if (!selected) { setError('Selecciona un SKU válido.'); return; }
-    if (!getUserUuid()) { setError('Falta el UUID del coordinador logístico que autoriza la salida. Cierra sesión y configúralo de nuevo.'); return; }
     if (requestedQuantity <= 0 || !Number.isInteger(requestedQuantity)) { setError('La cantidad debe ser un número entero mayor que cero.'); return; }
     if (insufficient) { setError(`Stock insuficiente: disponible ${selected.current_stock}, solicitado ${requestedQuantity}.`); return; }
     if (trackingRequired && !tracking.trim()) { setError('El número de seguimiento es obligatorio para un despacho.'); return; }
     setBusy(true);
     let movementSaved = false;
     try {
-      await inventoryApi.createOutbound({ sku_id: selected.id, quantity: requestedQuantity, exit_type: exitType, tracking_number: trackingRequired ? tracking.trim() : null, warehouse: selected.warehouse as Warehouse, user_uuid: getUserUuid() });
+      await inventoryApi.createOutbound({ sku_id: selected.id, quantity: requestedQuantity, exit_type: exitType, tracking_number: trackingRequired ? tracking.trim() : null, warehouse: selected.warehouse as Warehouse });
       setSuccess('Salida de stock registrada correctamente.'); setQuantity(''); setTracking('');
       movementSaved = true;
     } catch (reason) { setError(reason instanceof Error ? reason.message : 'No se pudo registrar la salida de stock.'); }

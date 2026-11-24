@@ -6,8 +6,10 @@ from datetime import datetime, timezone
 import math
 from enum import Enum
 from typing import Annotated, Literal, Optional
+from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field as PydanticField, field_validator, model_validator
+from sqlalchemy import Column, JSON
 from sqlmodel import Field, SQLModel
 
 SupplierCountry = Literal["USA", "Spain"]
@@ -104,8 +106,10 @@ class UserSelfUpdate(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    email: Optional[str] = PydanticField(default=None, min_length=3, max_length=254)
-    password: Optional[str] = PydanticField(default=None, min_length=8, max_length=128)
+    email: Optional[str] = PydanticField(
+        default=None, min_length=3, max_length=254)
+    password: Optional[str] = PydanticField(
+        default=None, min_length=8, max_length=128)
 
     @field_validator("email")
     @classmethod
@@ -131,6 +135,14 @@ class UserRead(BaseModel):
     created_at: datetime
 
 
+class RegistrationResponse(BaseModel):
+    """Minimal unauthenticated registration confirmation; never echoes email."""
+
+    id: str
+    role: UserRole
+    created_at: datetime
+
+
 class Profile(BaseModel):
     """TinyDB profile record linked one-to-one using the TinyDB user ID."""
 
@@ -141,8 +153,13 @@ class Profile(BaseModel):
     address: Optional[str] = None
 
 
-class ProfileRead(Profile):
-    """Public profile representation."""
+class ProfileRead(BaseModel):
+    """Public profile projection without the internal user foreign key."""
+
+    id: str
+    name: str
+    phone: Optional[str] = None
+    address: Optional[str] = None
 
 
 class ProfileUpdate(BaseModel):
@@ -282,8 +299,50 @@ class SKU(SQLModel, table=True):
     name: str
     sku: str = Field(index=True)
     client_name: str
+    # Nullable only to support rows created before the client registry existed.
+    # Startup migration backfills those rows with canonical client IDs.
+    client_id: Optional[str] = Field(default=None, index=True)
     category: str
     warehouse: str = Field(index=True)
+    threshold_quantity: Optional[int] = Field(default=None, ge=0)
+
+
+class InventoryClient(SQLModel, table=True):
+    """Canonical B2B client identity used by inventory telemetry."""
+
+    id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True)
+    name: str = Field(index=True)
+    normalized_name: str = Field(unique=True, index=True)
+
+
+class InventoryAudit(SQLModel, table=True):
+    """Persisted physical count needed to substantiate a discrepancy event."""
+
+    id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True)
+    sku_id: int = Field(foreign_key="sku.id", index=True)
+    warehouse: str = Field(index=True)
+    system_quantity: int
+    physical_quantity: int
+    user_uuid: str
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc), index=True)
+
+
+class TelemetryEvent(SQLModel, table=True):
+    """Transactional telemetry outbox record; transport is configured separately."""
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    event_id: str = Field(unique=True, index=True)
+    event_type: str = Field(index=True)
+    timestamp: datetime = Field(index=True)
+    session_id: Optional[str] = None
+    user_id: Optional[str] = None
+    request_id: Optional[str] = None
+    properties: dict = Field(sa_column=Column(JSON, nullable=False))
+    delivery: str
+    status: str = Field(default="pending", index=True)
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc))
 
 
 class StockEntry(SQLModel, table=True):

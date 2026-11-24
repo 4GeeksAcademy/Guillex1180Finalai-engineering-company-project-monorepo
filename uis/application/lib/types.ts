@@ -37,17 +37,16 @@ export interface StockExit {
 
 export interface StockOrder {
   id: number;
-  order_type?: 'inbound' | 'entry' | 'outbound' | 'exit' | (string & {});
-  sku_id: number;
-  sku_code?: string;
+  order_type: 'inbound' | 'outbound';
+  sku_name: string;
+  sku_code: string;
   quantity: number;
   warehouse: Warehouse;
   created_at: string;
   user_uuid: string;
-  sku?: SKU;
-  exit_type?: ExitType;
-  tracking_number?: string | null;
-  reference?: string;
+  reference: string | null;
+  exit_type: ExitType | null;
+  tracking_number: string | null;
 }
 
 export interface SKUCreate {
@@ -63,7 +62,6 @@ export interface InboundCreate {
   quantity: number;
   reference: string;
   warehouse: Warehouse;
-  user_uuid: string;
 }
 
 export interface OutboundCreate {
@@ -72,5 +70,4 @@ export interface OutboundCreate {
   exit_type: ExitType;
   tracking_number: string | null;
   warehouse: Warehouse;
-  user_uuid: string;
 }
