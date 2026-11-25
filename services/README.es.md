@@ -22,7 +22,7 @@ export TINYDB_PATH='./data/tinydb.json'
 export TRACKFLOW_BOOTSTRAP_TOKEN='local-dev-token'
 export TRACKFLOW_BOOTSTRAP_USER_UUID='00000000-0000-4000-8000-000000000001'
 python -m services.seed
-uvicorn services.main:app --reload
+uvicorn services.api.main:app --reload
 ```
 
 Configura el backoffice con `NEXT_PUBLIC_INVENTORY_API_URL=http://localhost:8000` y utiliza `local-dev-token` como token de sesión. El bootstrap solo escribe el hash SHA-256 del token en TinyDB, no el token en claro. Sustituye siempre las credenciales de ejemplo en entornos compartidos.

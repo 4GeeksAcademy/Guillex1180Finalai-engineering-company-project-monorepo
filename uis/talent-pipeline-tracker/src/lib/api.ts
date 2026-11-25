@@ -21,17 +21,42 @@ class ApiError extends Error {
 }
 
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(url, {
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    ...options,
-  });
-
-  if (!res.ok) {
-    const text = await res.text().catch(() => 'Unknown error');
-    throw new ApiError(res.status, `API error ${res.status}: ${text}`);
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      ...options,
+      headers: { 'Content-Type': 'application/json', ...options?.headers },
+    });
+  } catch {
+    throw new ApiError(0, 'No se pudo conectar con el servicio de candidaturas. Comprueba tu conexión e inténtalo de nuevo.');
   }
 
-  return res.json();
+  if (!res.ok) {
+    let detail: unknown;
+    try {
+      const body: unknown = await res.json();
+      if (body && typeof body === 'object' && 'detail' in body) detail = (body as { detail: unknown }).detail;
+    } catch {
+      // Ignore unstructured response bodies; they may contain internal details.
+    }
+    const message = res.status === 401
+      ? 'Tu sesión ha caducado. Actualiza la página e inténtalo de nuevo.'
+      : res.status === 403
+        ? 'No tienes permiso para realizar esta acción.'
+        : res.status === 404
+          ? 'No se encontró el registro solicitado. Actualiza la página e inténtalo de nuevo.'
+          : res.status >= 500
+            ? 'El servicio de candidaturas no está disponible ahora. Inténtalo más tarde.'
+              : 'No se pudo completar la solicitud. Revisa los datos e inténtalo de nuevo.';
+    throw new ApiError(res.status, message);
+  }
+
+  if (res.status === 204) return undefined as T;
+  try {
+    return await res.json() as T;
+  } catch {
+    throw new ApiError(0, 'El servicio devolvió una respuesta inesperada. Actualiza la página e inténtalo de nuevo.');
+  }
 }
 
 export async function fetchCandidates(params?: {
@@ -108,14 +133,9 @@ export async function replaceCandidate(
 }
 
 export async function deleteNote(recordId: string, noteId: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/records/${recordId}/notes/${noteId}`, {
+  await request<void>(`${API_BASE}/records/${recordId}/notes/${noteId}`, {
     method: 'DELETE',
   });
-
-  if (!res.ok && res.status !== 204) {
-    const text = await res.text().catch(() => 'Unknown error');
-    throw new ApiError(res.status, `API error ${res.status}: ${text}`);
-  }
 }
 
 export { ApiError };

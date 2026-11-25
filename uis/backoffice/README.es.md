@@ -5,8 +5,8 @@ Aplicación interna Next.js para operar el inventario de TrackFlow: consulta de 
 ## Requisitos
 
 - Node.js 18 o posterior y npm.
-- La API del HITO 5 ejecutándose en una URL accesible. En este repositorio todavía no está implementada `services/`.
-- Un bearer token válido emitido por el sistema de autenticación. La pantalla `/login` solo guarda el token y el UUID del operario; no autentica credenciales ni valida sesiones.
+- La API de TrackFlow ejecutándose en una URL accesible (por defecto `http://127.0.0.1:8000`).
+- Un bearer token válido emitido por el sistema de autenticación. La pantalla `/login` permite pegar el token; la API valida la sesión en cada solicitud.
 
 ## Puesta en marcha
 
@@ -17,7 +17,7 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Configura `NEXT_PUBLIC_INVENTORY_API_URL` en `.env.local` con la URL base de la API (por defecto `http://localhost:8000`). Abre `http://localhost:3000/login` y pega un token válido; el UUID de operario se envía con las órdenes. No guardes `.env.local` ni tokens en el repositorio.
+Configura `TRACKFLOW_API_URL` en `.env.local` con la URL base de la API para el proxy de Next.js (por defecto `http://127.0.0.1:8000`). La interfaz usa `/trackflow-api` como base para evitar llamadas directas del navegador al backend. Abre `http://localhost:3000/login` y pega un token válido junto con el UUID de TinyDB del operario; la API valida el token y obtiene de él la identidad autenticada. No guardes `.env.local` ni tokens en el repositorio.
 
 ## Vistas
 
@@ -28,4 +28,4 @@ Configura `NEXT_PUBLIC_INVENTORY_API_URL` en `.env.local` con la URL base de la 
 
 Las rutas antiguas `/inventory/...` se conservan como alias por compatibilidad.
 
-Las solicitudes se centralizan en `src/lib/inventory.ts`; las páginas de inventario requieren que exista un token local y redirigen a `/login` si falta. Esto es solo una protección de UX: la API debe validar token, permisos, stock por SKU/almacén y todas las reglas de negocio en servidor. La aplicación no considera validado un token por el mero hecho de estar almacenado.
+Las solicitudes se centralizan en `src/lib/inventory.ts`; las páginas de inventario requieren que exista un token local y redirigen a `/login` si falta. Esto es solo una protección de UX: la API valida el token, los permisos, el stock por SKU/almacén y las reglas de negocio en servidor.

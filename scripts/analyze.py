@@ -88,8 +88,13 @@ def main() -> int:
     try:
         records = parse_incident_csv(args.csv_file.read_bytes())
         summary = analyze_records(records)
-    except (OSError, ValueError) as exc:
-        print(f"Error: {exc}", file=sys.stderr)
+    except OSError as exc:
+        print(
+            f"Error: no se pudo leer el CSV. Comprueba la ruta y los permisos. ({exc})", file=sys.stderr)
+        return 2
+    except ValueError as exc:
+        print(
+            f"Error: el CSV no es válido. Revisa la codificación y los encabezados requeridos. ({exc})", file=sys.stderr)
         return 2
 
     print_report(summary, args.csv_file.name)
@@ -105,7 +110,8 @@ def main() -> int:
             Path("results.csv").write_text(results_csv(
                 summary), encoding="utf-8", newline="")
         except OSError as exc:
-            print(f"No se pudo guardar results.csv: {exc}", file=sys.stderr)
+            print(
+                f"No se pudo guardar results.csv. Comprueba los permisos y el espacio disponible. ({exc})", file=sys.stderr)
             return 1
         print("Resultados exportados a results.csv")
     elif answer not in {"n", "no"}:

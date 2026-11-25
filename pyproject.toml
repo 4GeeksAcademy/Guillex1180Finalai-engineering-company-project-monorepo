@@ -1,0 +1,30 @@
+[project]
+name = "trackflow-engineering"
+version = "0.1.0"
+description = "TrackFlow inventory and supplier directory API"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115,<1.0",
+    "libpass[bcrypt]>=1.9.4",
+    "psycopg[binary]>=3.3.9",
+    "python-dotenv>=1.0,<2.0",
+    "python-jose[cryptography]>=3.5.0",
+    "python-multipart>=0.0.9,<1.0",
+    "sqlalchemy>=2.1.9",
+    "sqlmodel>=0.0.22,<1.0",
+    "tinydb>=4.8,<5.0",
+    "uvicorn[standard]>=0.30,<1.0",
+]
+
+[project.scripts]
+seed = "services.api.seed:seed"
+
+[tool.uv]
+package = true
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["services*"]

@@ -19,6 +19,7 @@
   <meta name="robots" content="index, follow" />
   <meta name="author" content="TrackFlow" />
   <meta name="theme-color" content="#4f46e5" />
+  <link rel="icon" href="data:," />
   <link rel="canonical" href="https://trackflow.com" />
 
   <!-- ============================================================
@@ -71,10 +72,7 @@
   }
   </script>
 
-  <!-- ============================================================
-    TAILWIND CSS (CDN)
-    ============================================================ -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="styles.css" />
 
   <!-- ============================================================
     ESTILOS ADICIONALES INLINE
@@ -96,11 +94,11 @@
     .skip-link:focus { top: 0.25rem; }
 
     /* Utilidades de formulario */
-    .form-error { @apply hidden text-sm text-red-600 mt-1.5; }
-    .form-error.visible { @apply block; }
-    .form-warning { @apply hidden text-sm text-amber-700 mt-2; }
-    .form-warning.visible { @apply block; }
-    input.input-error, select.input-error, textarea.input-error { @apply border-red-500 ring-2 ring-red-500/30; }
+    .form-error { display: none; font-size: 0.875rem; line-height: 1.25rem; color: #dc2626; margin-top: 0.375rem; }
+    .form-error.visible { display: block; }
+    .form-warning { display: none; font-size: 0.875rem; line-height: 1.25rem; color: #b45309; margin-top: 0.5rem; }
+    .form-warning.visible { display: block; }
+    input.input-error, select.input-error, textarea.input-error { border-color: #ef4444; box-shadow: 0 0 0 2px rgba(239,68,68,0.3); }
 
     /* Transiciones suaves en hover de tarjetas */
     .card-hover { transition: transform 0.2s ease, box-shadow 0.2s ease; }
@@ -185,7 +183,7 @@
 
           <!-- Texto -->
           <div class="md:order-1 text-center md:text-left">
-            <span class="inline-block text-xs md:text-sm font-semibold uppercase tracking-widest text-indigo-500 bg-indigo-100 px-4 py-1.5 rounded-full mb-4">Operación en EE.UU. y España</span>
+            <span class="inline-block text-xs md:text-sm font-semibold uppercase tracking-widest text-indigo-700 bg-indigo-100 px-4 py-1.5 rounded-full mb-4">Operación en EE.UU. y España</span>
             <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-[1.1]">Logística que escala con tu e‑commerce</h1>
             <p class="mt-5 text-lg md:text-xl text-gray-600 leading-relaxed max-w-xl">Gestión de almacenes, entregas de última milla y logística inversa en Estados Unidos y España. Más de <strong class="font-semibold text-gray-900">15 años</strong> ayudando a marcas de moda, electrónica y cosmética a crecer sin preocuparse por la operación.</p>
             <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
@@ -223,7 +221,7 @@
     <section id="servicios" class="py-16 md:py-20 lg:py-24 bg-gray-50">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <header class="text-center mb-12 md:mb-16">
-          <span class="inline-block text-xs font-semibold uppercase tracking-widest text-indigo-500 bg-indigo-100 px-4 py-1.5 rounded-full mb-3">Qué hacemos</span>
+          <span class="inline-block text-xs font-semibold uppercase tracking-widest text-indigo-700 bg-indigo-100 px-4 py-1.5 rounded-full mb-3">Qué hacemos</span>
           <h2 class="text-3xl md:text-4xl font-bold text-gray-900">Nuestros servicios</h2>
           <p class="mt-4 text-lg text-gray-500 max-w-2xl mx-auto">Cubrimos toda la cadena logística de tu e‑commerce con infraestructura propia en ambos países.</p>
         </header>
@@ -289,7 +287,7 @@
     <section id="como-funciona" class="py-16 md:py-20 lg:py-24 bg-white">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <header class="text-center mb-12 md:mb-16">
-          <span class="inline-block text-xs font-semibold uppercase tracking-widest text-indigo-500 bg-indigo-100 px-4 py-1.5 rounded-full mb-3">Proceso</span>
+          <span class="inline-block text-xs font-semibold uppercase tracking-widest text-indigo-700 bg-indigo-100 px-4 py-1.5 rounded-full mb-3">Proceso</span>
           <h2 class="text-3xl md:text-4xl font-bold text-gray-900">Cómo funciona</h2>
           <p class="mt-4 text-lg text-gray-500 max-w-2xl mx-auto">Te acompañamos en cada paso para que tu logística opere sin fricciones.</p>
         </header>
@@ -332,7 +330,7 @@
     <section id="cobertura" class="py-16 md:py-20 lg:py-24 bg-gray-50">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <header class="text-center mb-12 md:mb-16">
-          <span class="inline-block text-xs font-semibold uppercase tracking-widest text-indigo-500 bg-indigo-100 px-4 py-1.5 rounded-full mb-3">Presencia</span>
+          <span class="inline-block text-xs font-semibold uppercase tracking-widest text-indigo-700 bg-indigo-100 px-4 py-1.5 rounded-full mb-3">Presencia</span>
           <h2 class="text-3xl md:text-4xl font-bold text-gray-900">Cobertura</h2>
           <p class="mt-4 text-lg text-gray-500 max-w-2xl mx-auto">Infraestructura propia y carriers certificados a ambos lados del Atlántico.</p>
         </header>
@@ -360,9 +358,9 @@
     <section id="por-que" class="py-16 md:py-20 lg:py-24 bg-indigo-50">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <header class="text-center mb-12 md:mb-16">
-          <span class="inline-block text-xs font-semibold uppercase tracking-widest text-indigo-500 bg-indigo-100 px-4 py-1.5 rounded-full mb-3">Ventajas</span>
+          <span class="inline-block text-xs font-semibold uppercase tracking-widest text-indigo-700 bg-indigo-100 px-4 py-1.5 rounded-full mb-3">Ventajas</span>
           <h2 class="text-3xl md:text-4xl font-bold text-gray-900">Por qué TrackFlow</h2>
-          <p class="mt-4 text-lg text-gray-500 max-w-2xl mx-auto">No somos un 3PL cualquiera. Estas son las razones por las que marcas de moda, electrónica y cosmética confían en nosotros.</p>
+          <p class="mt-4 text-lg text-gray-700 max-w-2xl mx-auto">No somos un 3PL cualquiera. Estas son las razones por las que marcas de moda, electrónica y cosmética confían en nosotros.</p>
         </header>
 
         <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -380,7 +378,7 @@
     <section id="aplicar" class="py-16 md:py-20 lg:py-24 bg-white">
       <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <header class="text-center mb-10">
-          <span class="inline-block text-xs font-semibold uppercase tracking-widest text-indigo-500 bg-indigo-100 px-4 py-1.5 rounded-full mb-3">Contacto</span>
+          <span class="inline-block text-xs font-semibold uppercase tracking-widest text-indigo-700 bg-indigo-100 px-4 py-1.5 rounded-full mb-3">Contacto</span>
           <h2 class="text-3xl md:text-4xl font-bold text-gray-900">Solicita información</h2>
           <p class="mt-4 text-lg text-gray-500">Cuéntanos sobre tu empresa y recibe una propuesta personalizada de nuestros servicios logísticos.</p>
         </header>
@@ -417,7 +415,7 @@
 
           <!-- 5. Sitio web (opcional) -->
           <div>
-            <label for="sitio-web" class="block font-semibold text-gray-800 mb-1.5">Sitio web de la empresa <span class="text-gray-400 text-sm">(opcional)</span></label>
+            <label for="sitio-web" class="block font-semibold text-gray-800 mb-1.5">Sitio web de la empresa <span class="text-gray-600 text-sm">(opcional)</span></label>
             <input type="url" id="sitio-web" name="sitio-web" class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 transition-all duration-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 outline-none" placeholder="Ej: https://mitienda.com" />
             <p class="form-error hidden" id="sitio-web-error" role="alert">Si incluyes sitio web, debe ser una URL válida</p>
           </div>
@@ -489,11 +487,11 @@
 
           <!-- 11. Comentarios (textarea) -->
           <div>
-            <label for="comentarios" class="block font-semibold text-gray-800 mb-1.5">Comentarios o necesidades específicas <span class="text-gray-400 text-sm">(opcional, máx. 500 caracteres)</span></label>
+            <label for="comentarios" class="block font-semibold text-gray-800 mb-1.5">Comentarios o necesidades específicas <span class="text-gray-600 text-sm">(opcional, máx. 500 caracteres)</span></label>
             <textarea id="comentarios" name="comentarios" class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 transition-all duration-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 outline-none" rows="4" maxlength="500" placeholder="Cuéntanos más sobre tus necesidades logísticas..." style="min-height:7rem;resize:vertical"></textarea>
             <div class="flex justify-between items-center mt-1.5">
               <p class="form-error hidden" id="comentarios-error" role="alert">Los comentarios no pueden exceder 500 caracteres</p>
-              <p class="text-xs text-gray-400 ml-auto" aria-live="polite"><span id="comentarios-count">0</span> / 500</p>
+              <p class="text-xs text-gray-600 ml-auto" aria-live="polite"><span id="comentarios-count">0</span> / 500</p>
             </div>
           </div>
 
@@ -511,7 +509,7 @@
             <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-lg px-8 py-4 rounded-xl shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2" aria-label="Enviar solicitud de información">Enviar solicitud</button>
           </div>
 
-          <p class="text-xs text-gray-400 text-center"><span class="text-red-500">*</span> Campos obligatorios</p>
+          <p class="text-xs text-gray-600 text-center"><span class="text-red-500">*</span> Campos obligatorios</p>
         </form>
 
         <!-- Mensaje de éxito -->
@@ -541,20 +539,20 @@
           <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-400 mb-4">Contacto</h3>
           <ul class="space-y-2 text-sm">
             <li><span class="text-gray-500" aria-hidden="true">✉️</span> <a href="mailto:comercial@trackflow.com" class="text-gray-300 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500">comercial@trackflow.com</a></li>
-            <li><span class="text-gray-500" aria-hidden="true">🇺🇸</span> <a href="tel:+12135550147" class="text-gray-300 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500">+1 213 555 0147</a> <span class="text-gray-500 text-xs">— Los Ángeles</span></li>
-            <li><span class="text-gray-500" aria-hidden="true">🇪🇸</span> <a href="tel:+34976123456" class="text-gray-300 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500">+34 976 123 456</a> <span class="text-gray-500 text-xs">— Zaragoza</span></li>
+            <li><span class="text-gray-500" aria-hidden="true">🇺🇸</span> <a href="tel:+12135550147" class="text-gray-300 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500">+1 213 555 0147</a> <span class="text-gray-300 text-xs">— Los Ángeles</span></li>
+            <li><span class="text-gray-500" aria-hidden="true">🇪🇸</span> <a href="tel:+34976123456" class="text-gray-300 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500">+34 976 123 456</a> <span class="text-gray-300 text-xs">— Zaragoza</span></li>
           </ul>
         </div>
         <div>
           <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-400 mb-4">Síguenos</h3>
           <ul class="space-y-3">
-            <li><a href="https://linkedin.com/company/trackflow" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 text-gray-300 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500" aria-label="TrackFlow en LinkedIn (se abre en nueva ventana)"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="3"/><text x="7" y="17" font-size="14" font-weight="bold">in</text></svg> LinkedIn</a></li>
+            <li><a href="https://linkedin.com/company/trackflow" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 text-gray-300 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500">TrackFlow en LinkedIn (se abre en nueva ventana)</a></li>
           </ul>
           <a href="#aplicar" class="inline-block mt-6 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-indigo-400">Solicitar información</a>
         </div>
       </div>
       <hr class="border-gray-700 mt-10 mb-6" />
-      <div class="flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-gray-500">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-gray-300">
         <p>&copy; 2025 TrackFlow. Todos los derechos reservados.</p>
         <nav aria-label="Enlaces legales" class="flex gap-4">
           <a href="#" class="hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500">Aviso legal</a>
