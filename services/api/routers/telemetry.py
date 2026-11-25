@@ -62,7 +62,8 @@ class TelemetryBatchResponse(BaseModel):
 
 def _derive_level(event_type: str) -> str:
     """Derive severity level from the event type."""
-    error_patterns = ("_failed", "_error", "_rejected", "_captured", "_exceeded")
+    error_patterns = ("_failed", "_error", "_rejected",
+                      "_captured", "_exceeded")
     warn_patterns = ("_expired", "_abandoned", "_threshold")
     if event_type.endswith(error_patterns):
         return "error"

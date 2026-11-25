@@ -126,7 +126,8 @@ def _ensure_telemetry_indexes() -> None:
     inspector = inspect(engine)
     if "telemetry_events" not in inspector.get_table_names():
         return
-    existing = {idx["name"] for idx in inspector.get_indexes("telemetry_events")}
+    existing = {idx["name"]
+                for idx in inspector.get_indexes("telemetry_events")}
     url = str(engine.url)
     with engine.begin() as connection:
         if "ix_telemetry_events_tags" not in existing:
