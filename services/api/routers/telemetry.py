@@ -19,12 +19,19 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Query
 from pydantic import BaseModel, ValidationError
 from sqlmodel import Session
 
+from services.api.cache import response_cache
 from services.api.database import engine
 from services.api.models import TelemetryRecord
+from services.telemetry.analysis import (
+    auth_failure_rate,
+    api_latency_stats,
+    error_rate_by_day,
+    volume_by_type_and_day,
+)
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -260,3 +267,71 @@ async def receive_telemetry(
         stored=stored,
         rejected=rejected,
     )
+
+
+# ---------------------------------------------------------------------------
+# Report endpoint — HITO 18
+# ---------------------------------------------------------------------------
+
+
+@router.get("/report")
+async def telemetry_report(
+    start_date: str | None = Query(
+        None,
+        description="ISO-8601 start date (e.g. 2025-01-10). Default: 7 days ago.",
+    ),
+    end_date: str | None = Query(
+        None,
+        description="ISO-8601 end date (e.g. 2025-01-20). Default: today.",
+    ),
+) -> dict:
+    """Reporte analítico de telemetría con 4 métricas agregadas.
+
+    Para cada período se computan:
+
+    - **volume_by_type_and_day** — eventos agrupados por tipo y fecha.
+    - **error_rate_by_day**      — porcentaje de eventos con nivel ``error``
+                                   sobre el total, por día.
+    - **api_latency_stats**      — promedio, P50, P95 y P99 de latencia
+                                   (eventos ``api_latency_recorded``).
+    - **auth_failure_rate**      — proporción de logins fallidos sobre
+                                   intentos totales, por día.
+
+    La respuesta se cachea con TTL de 60 segundos.  Si se proporcionan los
+    mismos ``start_date`` / ``end_date`` dentro de la ventana de caché, se
+    devuelve la respuesta en caché sin consultar la base de datos.
+    """
+    cache_key = f"telemetry:report:{start_date or ''}:{end_date or ''}"
+
+    # Intentar servir desde caché
+    cached = response_cache.get(cache_key)
+    if cached is not None:
+        logger.debug("Telemetry report served from cache (key=%s)", cache_key)
+        return cached
+
+    # Determinar el período real (usado para la respuesta)
+    from services.telemetry.analysis import _parse_dates
+    p_start, p_end = _parse_dates(start_date, end_date)
+
+    period = {
+        "from": p_start.isoformat() if p_start else None,
+        "to": p_end.isoformat() if p_end else None,
+    }
+
+    metrics = {
+        "volume_by_type_and_day": volume_by_type_and_day(start_date, end_date),
+        "error_rate_by_day": error_rate_by_day(start_date, end_date),
+        "api_latency_stats": api_latency_stats(start_date, end_date),
+        "auth_failure_rate": auth_failure_rate(start_date, end_date),
+    }
+
+    payload: dict = {
+        "period": period,
+        "metrics": metrics,
+    }
+
+    # Cachear por 60 segundos
+    response_cache.set(cache_key, payload, ttl_seconds=60)
+    logger.debug("Telemetry report computed and cached (key=%s)", cache_key)
+
+    return payload
