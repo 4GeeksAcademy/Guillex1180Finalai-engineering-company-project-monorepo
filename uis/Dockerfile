@@ -4,16 +4,18 @@ RUN apk add --no-cache bash
 
 WORKDIR /workspace
 
-COPY application/package.json application/package-lock.json ./application/
+# Copy dependency files from repo root (docker build context = repo root)
+COPY uis/application/package.json uis/application/package-lock.json ./application/
 RUN npm --prefix application ci --no-audit --no-fund
 
-COPY backoffice/package.json backoffice/package-lock.json ./backoffice/
+COPY uis/backoffice/package.json uis/backoffice/package-lock.json ./backoffice/
 RUN npm --prefix backoffice ci --no-audit --no-fund
 
-COPY application ./application
-COPY backoffice ./backoffice
-COPY start.sh ./start.sh
+# Copy application source
+COPY uis/application ./application
+COPY uis/backoffice ./backoffice
+COPY uis/start.sh ./start.sh
 RUN chmod +x ./start.sh
 
-EXPOSE 3000 3001
+EXPOSE 3000 3001 8080
 CMD ["./start.sh"]
