@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
+import hashlib
 
-from sqlmodel import Session, select
+from sqlmodel import Session, select, text
 from tinydb import TinyDB
 
 from services.api.database import _tinydb_path, create_db_and_tables, engine
-from services.api.models import InventoryAudit, InventoryClient, SKU, StockEntry, StockExit
+from services.api.models import (InventoryAudit, InventoryClient, SKU,
+                                 StockEntry, StockExit, TelemetryRecord)
 from services.api.telemetry import event_id_for, record_event
 from services.api.models import SupplierCreate
 
@@ -112,6 +114,74 @@ SUPPLIERS_SEED = [
         "contact_email": "enterprise@sap.com", "notes": "Suspendido. Andrés está evaluando alternativas más ligeras para el almacén de LA."},
     {"name": "ReturnBear", "country": "USA", "categories": ["reverse_logistics"], "rate_per_shipment": 4.15, "currency": "USD", "status": "active",
         "service_zone": "West Coast", "contact_email": "partnerships@returnbear.com", "notes": "Gestión de devoluciones para clientes de Los Ángeles."},
+]
+
+
+# ─────────────────────────────────────────────────────────────
+# Telemetry seed — genera ≥20 eventos realistas para HITO 18
+# ─────────────────────────────────────────────────────────────
+
+TELEMETRY_SEED_EVENTS: list[dict] = [
+    # --- API latency events (rendimiento) ---
+    {"event_type": "api_latency_recorded", "level": "info", "service": "api",
+     "properties": {"route": "inventory_products_list", "method": "GET", "status_code": 200, "duration_ms": 45.2}},
+    {"event_type": "api_latency_recorded", "level": "info", "service": "api",
+     "properties": {"route": "inventory_product_detail", "method": "GET", "status_code": 200, "duration_ms": 12.8}},
+    {"event_type": "api_latency_recorded", "level": "info", "service": "api",
+     "properties": {"route": "inventory_orders_list", "method": "GET", "status_code": 200, "duration_ms": 38.1}},
+    {"event_type": "api_latency_recorded", "level": "info", "service": "api",
+     "properties": {"route": "auth_login", "method": "POST", "status_code": 200, "duration_ms": 152.7}},
+    {"event_type": "api_latency_recorded", "level": "info", "service": "api",
+     "properties": {"route": "inventory_inbound_create", "method": "POST", "status_code": 200, "duration_ms": 67.3}},
+    {"event_type": "api_latency_recorded", "level": "info", "service": "api",
+     "properties": {"route": "inventory_outbound_create", "method": "POST", "status_code": 200, "duration_ms": 55.9}},
+    # --- API errors ---
+    {"event_type": "api_error_recorded", "level": "error", "service": "api",
+     "properties": {"route": "inventory_product_detail", "method": "GET", "status_code": 404, "error_code": "http_404", "error_class": "not_found"}},
+    {"event_type": "api_error_recorded", "level": "error", "service": "api",
+     "properties": {"route": "auth_login", "method": "POST", "status_code": 401, "error_code": "http_401", "error_class": "authorization"}},
+    {"event_type": "api_error_recorded", "level": "error", "service": "api",
+     "properties": {"route": "inventory_outbound_create", "method": "POST", "status_code": 422, "error_code": "http_422", "error_class": "validation"}},
+    # --- Auth events ---
+    {"event_type": "auth_login_succeeded", "level": "info", "service": "api",
+     "properties": {"method": "password", "user_id": "usr-001"}},
+    {"event_type": "auth_login_failed", "level": "error", "service": "api",
+     "properties": {"method": "password", "failure_reason": "invalid_credentials"}},
+    {"event_type": "auth_login_succeeded", "level": "info", "service": "api",
+     "properties": {"method": "token", "user_id": "usr-002"}},
+    {"event_type": "auth_login_failed", "level": "error", "service": "api",
+     "properties": {"method": "password", "failure_reason": "account_locked"}},
+    {"event_type": "session_expired", "level": "warn", "service": "api",
+     "properties": {"user_id": "usr-001", "session_duration_hours": 8.0}},
+    # --- Backoffice page views (volumen de uso) ---
+    {"event_type": "backoffice_page_viewed", "level": "info", "service": "backoffice",
+     "properties": {"view": "inventory/products", "warehouse": "LA"}},
+    {"event_type": "backoffice_page_viewed", "level": "info", "service": "backoffice",
+     "properties": {"view": "inventory/products", "warehouse": "ZGZ"}},
+    {"event_type": "backoffice_page_viewed", "level": "info", "service": "backoffice",
+     "properties": {"view": "inventory/orders", "warehouse": "LA"}},
+    {"event_type": "backoffice_page_viewed", "level": "info", "service": "backoffice",
+     "properties": {"view": "suppliers", "warehouse": "ZGZ"}},
+    {"event_type": "backoffice_page_viewed", "level": "info", "service": "backoffice",
+     "properties": {"view": "incidents"}},
+    # --- Inventory business events ---
+    {"event_type": "inbound_order_created", "level": "info", "service": "api",
+     "properties": {"sku": "CLT-SNK-W-42", "quantity": 100, "warehouse": "LA"}},
+    {"event_type": "outbound_order_created", "level": "info", "service": "api",
+     "properties": {"sku": "TEC-EAR-001", "quantity": 15, "warehouse": "LA"}},
+    {"event_type": "stock_threshold_triggered", "level": "warn", "service": "api",
+     "properties": {"sku": "CLT-SNK-W-42", "quantity": 22, "warehouse": "LA", "threshold": 22}},
+    {"event_type": "inventory_discrepancy_detected", "level": "error", "service": "api",
+     "properties": {"sku": "CSM-SRM-030", "warehouse": "ZGZ", "system_qty": 45, "physical_qty": 42}},
+    {"event_type": "direct_stock_edit_rejected", "level": "error", "service": "api",
+     "properties": {"sku": "TEC-CHG-065", "warehouse": "ZGZ", "reason": "threshold_exceeded", "quantity": -50}},
+    # --- Frontend events ---
+    {"event_type": "frontend_page_load_recorded", "level": "info", "service": "backoffice",
+     "properties": {"view": "inventory/products", "duration_ms": 2340.0}},
+    {"event_type": "frontend_error_captured", "level": "error", "service": "backoffice",
+     "properties": {"view": "inventory/orders", "error_class": "ApiError", "status_code": 500}},
+    {"event_type": "frontend_page_load_recorded", "level": "info", "service": "backoffice",
+     "properties": {"view": "login", "duration_ms": 890.0}},
 ]
 
 
@@ -303,6 +373,61 @@ def seed() -> int:
         f"{inserted_exits} exits, {inserted_suppliers} suppliers inserted)."
     )
     return inserted_suppliers
+
+
+def seed_telemetry() -> int:
+    """Seed telemetry_events with varied operational events.
+
+    Returns the number of new events inserted.
+    Uses a deterministic MD5-based event_id so re-running is idempotent.
+    """
+    from services.api.routers.telemetry import _extract_value, _build_message
+
+    with Session(engine) as session:
+        existing_ids = {
+            row[0] for row in
+            session.exec(text("SELECT id FROM telemetry_events")).all()
+        }
+
+    records: list[TelemetryRecord] = []
+    now = datetime.now(timezone.utc)
+
+    for i, ev in enumerate(TELEMETRY_SEED_EVENTS):
+        # Deterministic ID based on event content
+        raw = f"telemetry-seed:{ev['event_type']}:{i}"
+        event_id = hashlib.md5(raw.encode()).hexdigest()
+
+        if event_id in existing_ids:
+            continue
+
+        # Spread timestamps over the last 7 days
+        offset_hours = i * 6  # cada evento separado ~6h
+        ts = now - timedelta(
+            hours=offset_hours % 168,
+            minutes=(i * 23) % 60,
+        )
+
+        tags = dict(ev["properties"])
+        tags["eventId"] = event_id
+        tags["schemaVersion"] = "1.0"
+
+        records.append(TelemetryRecord(
+            id=event_id,
+            timestamp=ts,
+            service=ev["service"],
+            event_type=ev["event_type"],
+            level=ev["level"],
+            value=_extract_value(ev["event_type"], ev["properties"]),
+            message=_build_message(ev["event_type"], ev["properties"]),
+            tags=tags,
+        ))
+
+    if records:
+        with Session(engine) as session:
+            session.add_all(records)
+            session.commit()
+
+    return len(records)
 
 
 def _seed_dimensions(sku: SKU, warehouse: str) -> dict[str, str]:

@@ -20,6 +20,8 @@ from services.api.routes.profiles import router as profiles_router
 from services.api.routes.users import router as users_router
 from services.api.database import create_db_and_tables, provision_bootstrap_user
 from services.api.database import engine
+from services.api.cache import response_cache
+from services.api.seed import seed_telemetry
 from services.api.telemetry import record_event
 from sqlmodel import Session
 from services.routers.incidents import router as incidents_router
@@ -32,6 +34,13 @@ logger = logging.getLogger("uvicorn.error")
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     create_db_and_tables()
     provision_bootstrap_user()
+    # Seed telemetry data for development (idempotent)
+    try:
+        inserted = seed_telemetry()
+        if inserted:
+            logger.info("Seeded %d telemetry events for development", inserted)
+    except Exception:
+        logger.warning("Telemetry seed skipped (non-fatal)", exc_info=True)
     yield
 
 
