@@ -60,11 +60,13 @@ def create_db_and_tables() -> None:
         StockEntry,
         StockExit,
         TelemetryEvent,
+        TelemetryRecord,
     )
 
     _ensure_sku_columns()
     SQLModel.metadata.create_all(engine)
     _migrate_inventory_schema()
+    _ensure_telemetry_indexes()
 
 
 def _ensure_sku_columns() -> None:
@@ -117,6 +119,32 @@ def _migrate_inventory_schema() -> None:
                     "UPDATE sku SET client_id = :client_id WHERE client_id IS NULL AND client_name = :client_name"),
                 {"client_id": client_id, "client_name": client_name},
             )
+
+
+def _ensure_telemetry_indexes() -> None:
+    """Create GIN index on tags (PostgreSQL) or b-tree (SQLite)."""
+    inspector = inspect(engine)
+    if "telemetry_events" not in inspector.get_table_names():
+        return
+    existing = {idx["name"]
+                for idx in inspector.get_indexes("telemetry_events")}
+    url = str(engine.url)
+    with engine.begin() as connection:
+        if "ix_telemetry_events_tags" not in existing:
+            if url.startswith("sqlite"):
+                connection.execute(
+                    text(
+                        "CREATE INDEX IF NOT EXISTS ix_telemetry_events_tags "
+                        "ON telemetry_events (tags)"
+                    )
+                )
+            else:
+                connection.execute(
+                    text(
+                        "CREATE INDEX IF NOT EXISTS ix_telemetry_events_tags "
+                        "ON telemetry_events USING GIN (tags)"
+                    )
+                )
 
 
 def get_db() -> Generator[Session, None, None]:

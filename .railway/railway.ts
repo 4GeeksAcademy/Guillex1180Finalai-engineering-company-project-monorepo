@@ -18,8 +18,13 @@ export default defineRailway(() => {
     volumeMounts: { "/data": dataVolume },
   });
 
-  return project("trackflow-api", {
+  const trackflowApplication = service("trackflow-application", {
+    build: { builder: "DOCKERFILE", dockerfilePath: "uis/Dockerfile", buildEnvironment: "V3" },
+    replicas: { "iad": 1 },
+  });
+
+  return project("trackflow", {
     variables: { managed: false },
-    resources: [trackflowApi, dataVolume],
+    resources: [trackflowApi, trackflowApplication, dataVolume],
   });
 });

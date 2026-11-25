@@ -13,8 +13,7 @@
  */
 
 const ENDPOINT =
-  (process.env.NEXT_PUBLIC_TELEMETRY_ENDPOINT ?? '/trackflow-api/telemetry/events').replace(/\/$/, '') +
-  '/telemetry/events';
+  (process.env.NEXT_PUBLIC_TELEMETRY_ENDPOINT ?? '/trackflow-api/telemetry/events').replace(/\/+$/, '');
 
 /** Máximo de eventos por lote antes de forzar un envío. */
 const BATCH_MAX = 20;
