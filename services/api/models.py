@@ -366,3 +366,42 @@ class StockExit(SQLModel, table=True):
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc))
     user_uuid: str
+
+
+class TelemetryRecord(SQLModel, table=True):
+    """Append-only telemetry event storage — the real destination for frontend events.
+
+    This table replaces the stub from HITO 16. It is insert-only: events are
+    immutable facts. Never UPDATE or DELETE rows from this table.
+
+    Columns follow the canonical schema defined in HITO 17:
+      id         → uuid PK
+      timestamp  → event time (UTC)
+      service    → origin ('backoffice', 'api')
+      event_type → canonical event name
+      level      → severity: info / warn / error
+      value      → optional numeric payload (duration_ms, quantity, …)
+      message    → optional human-readable summary
+      tags       → JSONB with event.properties + envelope metadata
+    """
+
+    __tablename__ = "telemetry_events"  # type: ignore[assignment]
+
+    id: str = Field(
+        default_factory=lambda: str(uuid4()),
+        primary_key=True,
+    )
+    timestamp: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        index=True,
+    )
+    service: str = Field(nullable=False)
+    event_type: str = Field(nullable=False, index=True)
+    level: str = Field(default="info", nullable=False)
+    value: float | None = Field(default=None, nullable=True)
+    message: str | None = Field(default=None, nullable=True)
+    tags: dict = Field(
+        default={},
+        sa_column=Column(JSON, nullable=False, default={}),
+    )
