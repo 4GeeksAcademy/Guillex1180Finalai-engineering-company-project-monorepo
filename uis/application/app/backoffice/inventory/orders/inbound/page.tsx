@@ -6,6 +6,7 @@ import Feedback from '@/components/Feedback';
 import ProtectedPage from '@/components/ProtectedPage';
 import { inventoryApi } from '@/lib/inventory';
 import type { SKU, Warehouse } from '@/lib/types';
+import { track } from '@/lib/telemetry';
 
 export default function InboundPage() {
   const router = useRouter();
@@ -45,6 +46,13 @@ export default function InboundPage() {
     setBusy(true);
     try {
       await inventoryApi.createInbound({ sku_id: selected.id, quantity: Number(quantity), reference: reference.trim(), warehouse });
+      track('inbound_order_created', {
+        warehouse: warehouse.toLowerCase(),
+        client_id: selected.client_name,
+        product_id: selected.sku,
+        product_category: selected.category,
+        quantity: Number(quantity),
+      });
       setSuccess('Recepción de mercancía registrada correctamente.'); setSkuId(''); setQuantity(''); setReference(''); setWarehouse('LA');
       router.refresh();
     } catch (reason) { setError(reason instanceof Error ? reason.message : 'No se pudo registrar la entrada.'); }

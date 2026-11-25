@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import Feedback from '@/components/Feedback';
 import ProtectedPage from '@/components/ProtectedPage';
+import { track } from '@/lib/telemetry';
 import {
   SUPPLIER_CATEGORIES,
   suppliersApi,
@@ -31,6 +32,10 @@ export default function SuppliersPage() {
   const [refreshError, setRefreshError] = useState('');
   const [rowErrors, setRowErrors] = useState<Record<string, string>>({});
   const [pendingRows, setPendingRows] = useState<Record<string, 'rate' | 'status' | undefined>>({});
+
+  useEffect(() => {
+    track('backoffice_page_viewed', { view: 'suppliers', client_version: '1.0.0' });
+  }, []);
 
   const loadSuppliers = useCallback(async () => {
     setLoading(true);

@@ -5,6 +5,7 @@ import Feedback from '@/components/Feedback';
 import ProtectedPage from '@/components/ProtectedPage';
 import { inventoryApi } from '@/lib/inventory';
 import type { ExitType, SKU, Warehouse } from '@/lib/types';
+import { track } from '@/lib/telemetry';
 
 export default function OutboundPage() {
   const [products, setProducts] = useState<SKU[]>([]);
@@ -50,6 +51,14 @@ export default function OutboundPage() {
     let movementSaved = false;
     try {
       await inventoryApi.createOutbound({ sku_id: selected.id, quantity: requestedQuantity, exit_type: exitType, tracking_number: trackingRequired ? tracking.trim() : null, warehouse: selected.warehouse as Warehouse });
+      track('outbound_order_created', {
+        warehouse: selected.warehouse.toLowerCase(),
+        client_id: selected.client_name,
+        product_id: selected.sku,
+        product_category: selected.category,
+        quantity: requestedQuantity,
+        exit_type: exitType,
+      });
       setSuccess('Salida de stock registrada correctamente.'); setQuantity(''); setTracking('');
       movementSaved = true;
     } catch (reason) { setError(reason instanceof Error ? reason.message : 'No se pudo registrar la salida de stock.'); }

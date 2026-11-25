@@ -1,9 +1,10 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { ChangeEvent, DragEvent, useState } from 'react';
+import { ChangeEvent, DragEvent, useEffect, useState } from 'react';
 import Feedback from '@/components/Feedback';
 import ProtectedPage from '@/components/ProtectedPage';
+import { track } from '@/lib/telemetry';
 import { incidentsApi, type IncidentAnalysis } from '@/lib/incidents';
 
 const IncidentResults = dynamic(() => import('@/components/incidents/IncidentResults'), {
@@ -18,6 +19,10 @@ export default function IncidentsAnalysisPage() {
   const [analyzing, setAnalyzing] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [dragging, setDragging] = useState(false);
+
+  useEffect(() => {
+    track('backoffice_page_viewed', { view: 'incidents', client_version: '1.0.0' });
+  }, []);
 
   function acceptFile(candidate?: File) {
     setError('');

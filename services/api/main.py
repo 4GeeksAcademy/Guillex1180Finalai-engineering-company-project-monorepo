@@ -13,6 +13,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from services.api.routers.telemetry import router as telemetry_router
 from services.api.routes.suppliers import router as suppliers_router
 from services.api.routes.auth import router as auth_router
 from services.api.routes.profiles import router as profiles_router
@@ -137,6 +138,7 @@ class StatusResponse(BaseModel):
     status: str
 
 
+app.include_router(telemetry_router)
 app.include_router(inventory_router)
 app.include_router(incidents_router)
 app.include_router(suppliers_router)

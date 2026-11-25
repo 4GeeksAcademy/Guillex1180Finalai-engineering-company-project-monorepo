@@ -916,6 +916,9 @@
                     "type": "string",
                     "enum": [
                         "invalid_credentials",
+                        "invalid_token",
+                        "forbidden",
+                        "server_error",
                         "account_disabled",
                         "rate_limited",
                         "unknown"
@@ -940,13 +943,14 @@
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "role",
-                "warehouse",
                 "client_version"
             ],
             "properties": {
                 "role": {
-                    "type": "string",
+                    "type": [
+                        "string",
+                        "null"
+                    ],
                     "enum": [
                         "admin",
                         "manager",
@@ -954,7 +958,14 @@
                     ]
                 },
                 "warehouse": {
-                    "$ref": "#/definitions/warehouse"
+                    "anyOf": [
+                        {
+                            "$ref": "#/definitions/warehouse"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
                 },
                 "client_version": {
                     "type": "string",
@@ -1139,6 +1150,7 @@
                         "incidents",
                         "suppliers",
                         "users",
+                        "login",
                         "other_allowlisted"
                     ]
                 },
@@ -1148,7 +1160,8 @@
                 },
                 "duration_ms": {
                     "type": "number",
-                    "exclusiveMinimum": 0
+                    "exclusiveMinimum": 0,
+                    "description": "Perceived duration for the view (ms)."
                 },
                 "navigation_type": {
                     "type": "string",
@@ -1193,6 +1206,7 @@
                         "inventory_outbound",
                         "inventory_history",
                         "incidents",
+                        "login",
                         "other_allowlisted"
                     ]
                 },
@@ -1236,6 +1250,7 @@
                         "incidents",
                         "suppliers",
                         "users",
+                        "login",
                         "other_allowlisted"
                     ]
                 },

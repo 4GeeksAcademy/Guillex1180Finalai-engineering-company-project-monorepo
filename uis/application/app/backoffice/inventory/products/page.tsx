@@ -5,12 +5,17 @@ import { useCallback, useEffect, useState } from 'react';
 import Feedback from '@/components/Feedback';
 import ProtectedPage from '@/components/ProtectedPage';
 import { inventoryApi } from '@/lib/inventory';
+import { track } from '@/lib/telemetry';
 import type { SKU } from '@/lib/types';
 
 export default function ProductsPage() {
 	const [products, setProducts] = useState<SKU[]>([]);
 	const [error, setError] = useState('');
 	const [loading, setLoading] = useState(true);
+
+	useEffect(() => {
+		track('backoffice_page_viewed', { view: 'inventory_products', client_version: '1.0.0' });
+	}, []);
 
 	const loadProducts = useCallback(async () => {
 		setLoading(true);

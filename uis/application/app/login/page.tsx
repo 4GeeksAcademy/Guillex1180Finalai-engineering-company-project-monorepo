@@ -4,6 +4,7 @@ import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Feedback from '@/components/Feedback';
 import { saveSession } from '@/lib/auth';
+import { track } from '@/lib/telemetry';
 
 const API_BASE = (process.env.NEXT_PUBLIC_INVENTORY_API_URL ?? '/trackflow-api').replace(/\/$/, '');
 
@@ -31,14 +32,25 @@ export default function LoginPage() {
         cache: 'no-store',
       });
       if (!response.ok) {
-        if (response.status === 401) throw new Error('El token no es válido o ha caducado. Genera uno nuevo e inténtalo otra vez.');
-        if (response.status === 403) throw new Error('No tienes permiso para acceder al backoffice. Contacta con el administrador.');
-        if (response.status >= 500) throw new Error('El servicio de autenticación no está disponible. Inténtalo de nuevo más tarde.');
+        if (response.status === 401) {
+          track('auth_login_failed', { failure_reason: 'invalid_token', client_version: '1.0.0' });
+          throw new Error('El token no es válido o ha caducado. Genera uno nuevo e inténtalo otra vez.');
+        }
+        if (response.status === 403) {
+          track('auth_login_failed', { failure_reason: 'forbidden', client_version: '1.0.0' });
+          throw new Error('No tienes permiso para acceder al backoffice. Contacta con el administrador.');
+        }
+        if (response.status >= 500) {
+          track('auth_login_failed', { failure_reason: 'server_error', client_version: '1.0.0' });
+          throw new Error('El servicio de autenticación no está disponible. Inténtalo de nuevo más tarde.');
+        }
+        track('auth_login_failed', { failure_reason: 'unknown', client_version: '1.0.0' });
         throw new Error('No se pudo validar la sesión. Revisa los datos e inténtalo de nuevo.');
       }
 
       try {
         saveSession(normalizedToken, normalizedUuid);
+        track('auth_login_succeeded', { client_version: '1.0.0' });
       } catch {
         setError('No se pudo guardar la sesión en este navegador. Habilita el almacenamiento del sitio e inténtalo de nuevo.');
         return;
