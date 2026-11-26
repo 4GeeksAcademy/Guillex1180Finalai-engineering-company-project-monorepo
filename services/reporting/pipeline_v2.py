@@ -119,10 +119,10 @@ def extract_business_events(
 
 
 @task(
-    cache_key_fn=lambda ctx, df, client_map: (
-        f"transform:{ctx.parameters.get('start_date', '')}:"
-        f"{ctx.parameters.get('end_date', '')}:"
-        f"{hash(frozenset(client_map.items()))}"
+    cache_key_fn=lambda task_ctx, inputs: (
+        f"transform:{task_ctx.parameters.get('start_date', '')}:"
+        f"{task_ctx.parameters.get('end_date', '')}:"
+        f"{hash(frozenset(inputs.get('client_map', {}).items()))}"
     ),
     cache_expiration=timedelta(hours=1),
 )
