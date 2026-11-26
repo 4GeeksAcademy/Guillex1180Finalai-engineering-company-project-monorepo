@@ -14,6 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from services.api.routers.telemetry import router as telemetry_router
+from services.api.routers.reporting import router as reporting_router
 from services.api.routes.suppliers import router as suppliers_router
 from services.api.routes.auth import router as auth_router
 from services.api.routes.profiles import router as profiles_router
@@ -154,6 +155,7 @@ app.include_router(suppliers_router)
 app.include_router(users_router)
 app.include_router(profiles_router)
 app.include_router(auth_router)
+app.include_router(reporting_router)
 
 
 @app.get("/", response_model=StatusResponse, tags=["health"])

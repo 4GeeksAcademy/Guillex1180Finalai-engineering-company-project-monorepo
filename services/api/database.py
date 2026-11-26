@@ -62,6 +62,9 @@ def create_db_and_tables() -> None:
         TelemetryEvent,
         TelemetryRecord,
     )
+    from services.reporting.models import (  # noqa: F401
+        WeeklyWarehouseClientPerformance,
+    )
 
     _ensure_sku_columns()
     SQLModel.metadata.create_all(engine)
