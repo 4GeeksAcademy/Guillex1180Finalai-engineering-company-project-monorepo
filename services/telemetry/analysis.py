@@ -5,9 +5,9 @@ Cada función recibe *start_date* / *end_date* como strings ISO-8601 en UTC
   cargar (SQL) → refinar (Pandas) → pd.to_datetime(utc=True) → agrupar → agregar → servir.
 
 NOTA sobre portabilidad PostgreSQL/SQLite:
-  Los parámetros :start_date y :end_date se convierten a TIMESTAMPTZ mediante
-  CAST(... AS TIMESTAMPTZ) para que PostgreSQL pueda compararlos con la
-  columna ``timestamp`` (timestamp with time zone).
+  Los parámetros :start_date y :end_date se vinculan directamente sin CAST,
+  SQLAlchemy y el driver DB gestionan la comparación con la columna
+  ``timestamp`` de forma transparente en ambos dialectos.
 """
 
 from __future__ import annotations
@@ -49,8 +49,8 @@ def volume_by_type_and_day(
     sql = sa_text("""
         SELECT event_type, timestamp
         FROM telemetry_events te
-        WHERE te.timestamp >= CAST(:start_date AS TIMESTAMPTZ)
-          AND te.timestamp < CAST(:end_date AS TIMESTAMPTZ)
+        WHERE te.timestamp >= :start_date
+          AND te.timestamp < :end_date
         ORDER BY te.timestamp
     """).bindparams(start_date=start_date, end_date=end_date)
 
@@ -94,8 +94,8 @@ def error_rate_by_day(
     sql = sa_text("""
         SELECT level, timestamp
         FROM telemetry_events te
-        WHERE te.timestamp >= CAST(:start_date AS TIMESTAMPTZ)
-          AND te.timestamp < CAST(:end_date AS TIMESTAMPTZ)
+        WHERE te.timestamp >= :start_date
+          AND te.timestamp < :end_date
         ORDER BY te.timestamp
     """).bindparams(start_date=start_date, end_date=end_date)
 
@@ -146,8 +146,8 @@ def api_latency_stats(
     sql = sa_text("""
         SELECT timestamp, value
         FROM telemetry_events te
-        WHERE te.timestamp >= CAST(:start_date AS TIMESTAMPTZ)
-          AND te.timestamp < CAST(:end_date AS TIMESTAMPTZ)
+        WHERE te.timestamp >= :start_date
+          AND te.timestamp < :end_date
           AND te.event_type = :event_type
           AND te.value IS NOT NULL
         ORDER BY te.timestamp
@@ -179,7 +179,8 @@ def api_latency_stats(
         .agg(["mean", "median", lambda x: x.quantile(0.95), lambda x: x.quantile(0.99), "count"])
         .reset_index()
     )
-    grouped.columns = ["date", "avg_ms", "p50_ms", "p95_ms", "p99_ms", "samples"]
+    grouped.columns = ["date", "avg_ms",
+                       "p50_ms", "p95_ms", "p99_ms", "samples"]
     grouped["avg_ms"] = grouped["avg_ms"].round(1)
     grouped["p50_ms"] = grouped["p50_ms"].round(1)
     grouped["p95_ms"] = grouped["p95_ms"].round(1)
@@ -208,8 +209,8 @@ def auth_failure_rate(
     sql = sa_text("""
         SELECT event_type, timestamp
         FROM telemetry_events te
-        WHERE te.timestamp >= CAST(:start_date AS TIMESTAMPTZ)
-          AND te.timestamp < CAST(:end_date AS TIMESTAMPTZ)
+        WHERE te.timestamp >= :start_date
+          AND te.timestamp < :end_date
           AND te.event_type IN (:ev_fail, :ev_ok)
         ORDER BY te.timestamp
     """).bindparams(
