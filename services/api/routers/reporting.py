@@ -22,7 +22,7 @@ from sqlmodel import Session
 
 from services.api.cache import response_cache
 from services.api.database import engine
-from data.pipelines.pipeline import run_pipeline_flow
+from services.reporting.pipeline_v2 import run_pipeline_flow
 from services.reporting.schemas import (
     WeeklyPerformanceEntry,
     WeeklyPerformanceResponse,
