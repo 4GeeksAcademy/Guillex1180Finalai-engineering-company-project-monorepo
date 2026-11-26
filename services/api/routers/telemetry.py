@@ -282,26 +282,46 @@ async def telemetry_report(
     ),
     end_date: str | None = Query(
         None,
-        description="ISO-8601 end date (e.g. 2025-01-20). Default: today.",
+        description="ISO-8601 end date (e.g. 2025-01-20). Default: today (UTC).",
     ),
 ) -> dict:
     """Reporte analítico de telemetría con 4 métricas agregadas.
 
-    Para cada período se computan:
+    El período se resuelve una sola vez al inicio del handler:
 
-    - **volume_by_type_and_day** — eventos agrupados por tipo y fecha.
-    - **error_rate_by_day**      — porcentaje de eventos con nivel ``error``
-                                   sobre el total, por día.
-    - **api_latency_stats**      — promedio, P50, P95 y P99 de latencia
-                                   (eventos ``api_latency_recorded``).
-    - **auth_failure_rate**      — proporción de logins fallidos sobre
-                                   intentos totales, por día.
+    - Si se proporcionan ``start_date`` / ``end_date`` se normalizan a UTC
+      como ISO-8601 (inicio del día/principio del día siguiente).
+    - Si no se proporcionan: ``end_date = ahora (UTC)``,
+      ``start_date = end_date - 7 días (UTC)``.
 
-    La respuesta se cachea con TTL de 60 segundos.  Si se proporcionan los
-    mismos ``start_date`` / ``end_date`` dentro de la ventana de caché, se
-    devuelve la respuesta en caché sin consultar la base de datos.
+    Luego se pasa el mismo par ``(start_date, end_date)`` resuelto a cada
+    función de métrica y se cachea el resultado por 60 segundos.
     """
-    cache_key = f"telemetry:report:{start_date or ''}:{end_date or ''}"
+    import datetime as dtmod
+
+    # ── 1. Resolver el período una sola vez (en UTC) ──────────────────────
+    now_utc = dtmod.datetime.now(dtmod.timezone.utc)
+
+    if end_date is not None:
+        # Normalizar: final del día proporcionado → inicio del día siguiente
+        end_dt = datetime.fromisoformat(end_date).replace(tzinfo=dtmod.timezone.utc)
+        end_resolved = end_dt + dtmod.timedelta(days=1)
+    else:
+        end_resolved = now_utc
+
+    if start_date is not None:
+        start_resolved = datetime.fromisoformat(start_date).replace(
+            tzinfo=dtmod.timezone.utc
+        )
+    else:
+        start_resolved = end_resolved - dtmod.timedelta(days=7)
+
+    period = {
+        "from": start_resolved.isoformat(),
+        "to": end_resolved.isoformat(),
+    }
+
+    cache_key = f"telemetry:report:{start_resolved.isoformat()}:{end_resolved.isoformat()}"
 
     # Intentar servir desde caché
     cached = response_cache.get(cache_key)
@@ -309,20 +329,15 @@ async def telemetry_report(
         logger.debug("Telemetry report served from cache (key=%s)", cache_key)
         return cached
 
-    # Determinar el período real (usado para la respuesta)
-    from services.telemetry.analysis import _parse_dates
-    p_start, p_end = _parse_dates(start_date, end_date)
-
-    period = {
-        "from": p_start.isoformat() if p_start else None,
-        "to": p_end.isoformat() if p_end else None,
-    }
+    # ── 2. Pasar los mismos start/end resueltos a cada métrica ────────────
+    s = start_resolved.isoformat()
+    e = end_resolved.isoformat()
 
     metrics = {
-        "volume_by_type_and_day": volume_by_type_and_day(start_date, end_date),
-        "error_rate_by_day": error_rate_by_day(start_date, end_date),
-        "api_latency_stats": api_latency_stats(start_date, end_date),
-        "auth_failure_rate": auth_failure_rate(start_date, end_date),
+        "volume_by_type_and_day": volume_by_type_and_day(s, e),
+        "error_rate_by_day": error_rate_by_day(s, e),
+        "api_latency_stats": api_latency_stats(s, e),
+        "auth_failure_rate": auth_failure_rate(s, e),
     }
 
     payload: dict = {

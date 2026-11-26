@@ -1,14 +1,18 @@
 """Pipeline de análisis de telemetría para HITO 18.
 
-Sigue el patrón: cargar (SQL) → refinar (Pandas) → convertir tipos → agrupar → agregar → servir.
-Cada función recibe *start_date* / *end_date* opcionales (strings ISO-8601),
-filtra en SQL, refina con Pandas y retorna ``list[dict]``.
+Cada función recibe *start_date* / *end_date* como strings ISO-8601 en UTC
+(ya resueltos por el endpoint).  Sigue el patrón:
+  cargar (SQL) → refinar (Pandas) → pd.to_datetime(utc=True) → agrupar → agregar → servir.
+
+NOTA sobre portabilidad PostgreSQL/SQLite:
+  Los parámetros :start_date y :end_date se convierten a TIMESTAMPTZ mediante
+  CAST(... AS TIMESTAMPTZ) para que PostgreSQL pueda compararlos con la
+  columna ``timestamp`` (timestamp with time zone).
 """
 
 from __future__ import annotations
 
 import logging
-from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
 import pandas as pd
@@ -26,96 +30,29 @@ _EVENT_API_ERROR = "api_error_recorded"
 _EVENT_AUTH_FAILED = "auth_login_failed"
 _EVENT_AUTH_SUCCEEDED = "auth_login_succeeded"
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-
-def _build_date_filter(
-    start_date: date | None,
-    end_date: date | None,
-    alias: str = "te",
-) -> tuple[str, dict[str, Any]]:
-    """Build a SQL WHERE fragment + param dict for the date range.
-
-    Returns ``(fragment, params_dict)``.
-    The fragment starts with `` AND `` so it can be used in ``WHERE 1=1 {fragment}``.
-    """
-    params: dict[str, Any] = {}
-    parts: list[str] = []
-
-    if start_date is not None:
-        parts.append(f"{alias}.timestamp >= :start_date")
-        params["start_date"] = datetime.combine(
-            start_date, datetime.min.time(), tzinfo=timezone.utc
-        )
-    if end_date is not None:
-        parts.append(f"{alias}.timestamp < :end_date_plus")
-        end_plus = datetime.combine(
-            end_date, datetime.min.time(), tzinfo=timezone.utc
-        ) + timedelta(days=1)
-        params["end_date_plus"] = end_plus
-
-    if not parts:
-        return "", {}
-    return " AND " + " AND ".join(parts), params
-
-
-def _parse_dates(
-    start_date: str | None,
-    end_date: str | None,
-    default_days: int = 7,
-) -> tuple[date | None, date | None]:
-    """Parse optional ISO-8601 strings into ``date`` objects.
-
-    If neither is provided, defaults to the last *default_days* days.
-    """
-    now = datetime.now(timezone.utc)
-
-    if start_date is None and end_date is None:
-        end = now.date()
-        start = end - timedelta(days=default_days)
-        return start, end
-
-    parsed_start: date | None = None
-    parsed_end: date | None = None
-
-    if start_date is not None:
-        parsed_start = date.fromisoformat(start_date)
-    if end_date is not None:
-        parsed_end = date.fromisoformat(end_date)
-
-    return parsed_start, parsed_end
-
-
 # ═══════════════════════════════════════════════════════════════════════════
 # Métrica 1 — Volumen por tipo de evento y día
 # ═══════════════════════════════════════════════════════════════════════════
 
 
 def volume_by_type_and_day(
-    start_date: str | None = None,
-    end_date: str | None = None,
+    start_date: str,
+    end_date: str,
 ) -> list[dict[str, Any]]:
     """Agrupa eventos por ``(event_type, fecha)`` y cuenta ocurrencias.
 
-    Retorna::
-
-        [
-          {"event_type": "api_latency_recorded", "date": "2025-01-15", "count": 12},
-          ...
-        ]
+    1) Cargar filas desde telemetry_events filtradas por rango temporal.
+    2) Refinar: sin limpieza adicional para esta métrica.
+    3) Convertir timestamp con pd.to_datetime(utc=True).
+    4) Agrupar por event_type y fecha (extraída del timestamp ya en UTC).
     """
-    start, end = _parse_dates(start_date, end_date)
-    clause, params = _build_date_filter(start, end)
-
-    sql = sa_text(f"""
-        SELECT event_type, DATE(timestamp) AS day, COUNT(*) AS cnt
+    sql = sa_text("""
+        SELECT event_type, timestamp
         FROM telemetry_events te
-        WHERE 1=1 {clause}
-        GROUP BY event_type, day
-        ORDER BY day DESC, cnt DESC
-    """).bindparams(**params)
+        WHERE te.timestamp >= CAST(:start_date AS TIMESTAMPTZ)
+          AND te.timestamp < CAST(:end_date AS TIMESTAMPTZ)
+        ORDER BY te.timestamp
+    """).bindparams(start_date=start_date, end_date=end_date)
 
     with engine.connect() as conn:
         df = pd.read_sql(sql, conn)
@@ -123,9 +60,19 @@ def volume_by_type_and_day(
     if df.empty:
         return []
 
-    df = df.rename(columns={"cnt": "count"})
-    df["date"] = df["day"].astype(str)
-    return df[["event_type", "date", "count"]].to_dict(orient="records")
+    # Convertir timestamp a UTC
+    df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
+    df["date"] = df["timestamp"].dt.strftime("%Y-%m-%d")
+
+    # Agrupar por event_type y fecha
+    grouped = (
+        df.groupby(["event_type", "date"])
+        .size()
+        .reset_index(name="count")
+        .sort_values(["date", "count"], ascending=[False, False])
+    )
+
+    return grouped.to_dict(orient="records")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -134,31 +81,23 @@ def volume_by_type_and_day(
 
 
 def error_rate_by_day(
-    start_date: str | None = None,
-    end_date: str | None = None,
+    start_date: str,
+    end_date: str,
 ) -> list[dict[str, Any]]:
     """Calcula el porcentaje de eventos con nivel ``error`` sobre el total por día.
 
-    Retorna::
-
-        [
-          {"date": "2025-01-15", "total_events": 48, "errors": 7, "error_rate_pct": 14.58},
-          ...
-        ]
+    1) Cargar filas desde telemetry_events filtradas por rango temporal.
+    2) Refinar: sin limpieza adicional; level ya es columna en DB.
+    3) Convertir timestamp con pd.to_datetime(utc=True).
+    4) Agrupar por día y agregar con .agg() -> count total + sum de errors.
     """
-    start, end = _parse_dates(start_date, end_date)
-    clause, params = _build_date_filter(start, end)
-
-    sql = sa_text(f"""
-        SELECT
-            DATE(timestamp) AS day,
-            COUNT(*)             AS total_events,
-            SUM(CASE WHEN level = 'error' THEN 1 ELSE 0 END) AS errors
+    sql = sa_text("""
+        SELECT level, timestamp
         FROM telemetry_events te
-        WHERE 1=1 {clause}
-        GROUP BY day
-        ORDER BY day DESC
-    """).bindparams(**params)
+        WHERE te.timestamp >= CAST(:start_date AS TIMESTAMPTZ)
+          AND te.timestamp < CAST(:end_date AS TIMESTAMPTZ)
+        ORDER BY te.timestamp
+    """).bindparams(start_date=start_date, end_date=end_date)
 
     with engine.connect() as conn:
         df = pd.read_sql(sql, conn)
@@ -166,11 +105,26 @@ def error_rate_by_day(
     if df.empty:
         return []
 
-    df["error_rate_pct"] = (df["errors"] / df["total_events"] * 100).round(2)
-    df["date"] = df["day"].astype(str)
-    return df[["date", "total_events", "errors", "error_rate_pct"]].to_dict(
-        orient="records"
+    # Convertir timestamp a UTC
+    df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
+    df["date"] = df["timestamp"].dt.strftime("%Y-%m-%d")
+    df["is_error"] = (df["level"] == "error").astype(int)
+
+    # Agrupar por día
+    grouped = (
+        df.groupby("date")
+        .agg(total_events=("is_error", "count"), errors=("is_error", "sum"))
+        .reset_index()
+        .sort_values("date", ascending=False)
     )
+
+    grouped["error_rate_pct"] = (
+        (grouped["errors"] / grouped["total_events"] * 100).round(2)
+    )
+    grouped["errors"] = grouped["errors"].astype(int)
+    grouped["total_events"] = grouped["total_events"].astype(int)
+
+    return grouped.to_dict(orient="records")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -179,33 +133,28 @@ def error_rate_by_day(
 
 
 def api_latency_stats(
-    start_date: str | None = None,
-    end_date: str | None = None,
+    start_date: str,
+    end_date: str,
 ) -> list[dict[str, Any]]:
     """Estadísticas de latencia (ms) para peticiones API por día.
 
-    Filtra solo eventos ``api_latency_recorded`` con ``value`` no nulo.
-    Agrupa por día y calcula promedio, mediana (P50), P95 y P99.
-
-    Retorna::
-
-        [
-          {"date": "2025-01-15", "avg_ms": 61.9, "p50_ms": 55.9,
-           "p95_ms": 152.7, "p99_ms": 152.7, "samples": 5},
-          ...
-        ]
+    1) Cargar filas con event_type = api_latency_recorded y value no nulo.
+    2) Refinar: forzar value a numérico, descartar nulos.
+    3) Convertir timestamp con pd.to_datetime(utc=True).
+    4) Agrupar por día y agregar con .agg() — sin bucles.
     """
-    start, end = _parse_dates(start_date, end_date)
-    clause, params = _build_date_filter(start, end)
-
-    sql = sa_text(f"""
-        SELECT DATE(timestamp) AS day, value
+    sql = sa_text("""
+        SELECT timestamp, value
         FROM telemetry_events te
-        WHERE 1=1 {clause}
-          AND event_type = :event_type
-          AND value IS NOT NULL
-        ORDER BY day
-    """).bindparams(event_type=_EVENT_API_LATENCY, **params)
+        WHERE te.timestamp >= CAST(:start_date AS TIMESTAMPTZ)
+          AND te.timestamp < CAST(:end_date AS TIMESTAMPTZ)
+          AND te.event_type = :event_type
+          AND te.value IS NOT NULL
+        ORDER BY te.timestamp
+    """).bindparams(
+        start_date=start_date, end_date=end_date,
+        event_type=_EVENT_API_LATENCY,
+    )
 
     with engine.connect() as conn:
         df = pd.read_sql(sql, conn)
@@ -213,65 +162,61 @@ def api_latency_stats(
     if df.empty:
         return []
 
+    # Refinar: convertir value a numérico, descartar nulos
     df["value"] = pd.to_numeric(df["value"], errors="coerce")
     df = df.dropna(subset=["value"])
 
     if df.empty:
         return []
 
-    # Agrupar por día y calcular percentiles en una sola pasada
+    # Convertir timestamp a UTC
+    df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
+    df["date"] = df["timestamp"].dt.strftime("%Y-%m-%d")
+
+    # Agrupar por día y agregar métricas
     grouped = (
-        df.groupby("day")["value"]
+        df.groupby("date")["value"]
         .agg(["mean", "median", lambda x: x.quantile(0.95), lambda x: x.quantile(0.99), "count"])
         .reset_index()
     )
-    grouped.columns = ["day", "avg_ms",
-                       "p50_ms", "p95_ms", "p99_ms", "samples"]
-
+    grouped.columns = ["date", "avg_ms", "p50_ms", "p95_ms", "p99_ms", "samples"]
     grouped["avg_ms"] = grouped["avg_ms"].round(1)
     grouped["p50_ms"] = grouped["p50_ms"].round(1)
     grouped["p95_ms"] = grouped["p95_ms"].round(1)
     grouped["p99_ms"] = grouped["p99_ms"].round(1)
     grouped["samples"] = grouped["samples"].astype(int)
-    grouped["date"] = grouped["day"].astype(str)
 
-    return grouped[["date", "avg_ms", "p50_ms", "p95_ms", "p99_ms", "samples"]].to_dict(
-        orient="records"
-    )
+    return grouped.to_dict(orient="records")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# Métrica 4 (bonus) — Tasa de fallo de autenticación por día
+# Métrica 4 — Tasa de fallo de autenticación por día
 # ═══════════════════════════════════════════════════════════════════════════
 
 
 def auth_failure_rate(
-    start_date: str | None = None,
-    end_date: str | None = None,
+    start_date: str,
+    end_date: str,
 ) -> list[dict[str, Any]]:
     """Proporción de intentos fallidos de login sobre el total por día.
 
-    Retorna::
-
-        [
-          {"date": "2025-01-15", "attempts": 4, "failures": 2, "failure_rate_pct": 50.0},
-          ...
-        ]
+    1) Cargar filas con event_type IN (auth_login_failed, auth_login_succeeded).
+    2) Refinar: sin limpieza adicional.
+    3) Convertir timestamp con pd.to_datetime(utc=True).
+    4) Agrupar con pivot_table: failed / succeeded por día.
     """
-    start, end = _parse_dates(start_date, end_date)
-    clause, params = _build_date_filter(start, end)
-
-    sql = sa_text(f"""
-        SELECT
-            DATE(timestamp) AS day,
-            event_type,
-            COUNT(*) AS cnt
+    sql = sa_text("""
+        SELECT event_type, timestamp
         FROM telemetry_events te
-        WHERE 1=1 {clause}
-          AND event_type IN (:ev_fail, :ev_ok)
-        GROUP BY day, event_type
-        ORDER BY day DESC
-    """).bindparams(ev_fail=_EVENT_AUTH_FAILED, ev_ok=_EVENT_AUTH_SUCCEEDED, **params)
+        WHERE te.timestamp >= CAST(:start_date AS TIMESTAMPTZ)
+          AND te.timestamp < CAST(:end_date AS TIMESTAMPTZ)
+          AND te.event_type IN (:ev_fail, :ev_ok)
+        ORDER BY te.timestamp
+    """).bindparams(
+        start_date=start_date, end_date=end_date,
+        ev_fail=_EVENT_AUTH_FAILED,
+        ev_ok=_EVENT_AUTH_SUCCEEDED,
+    )
 
     with engine.connect() as conn:
         df = pd.read_sql(sql, conn)
@@ -279,14 +224,21 @@ def auth_failure_rate(
     if df.empty:
         return []
 
+    # Convertir timestamp a UTC
+    df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
+    df["date"] = df["timestamp"].dt.strftime("%Y-%m-%d")
+
     # Pivot: una fila por día con columnas failed / succeeded
-    pivot = df.pivot_table(
-        index="day",
-        columns="event_type",
-        values="cnt",
-        aggfunc="sum",
-        fill_value=0,
-    ).reset_index()
+    pivot = (
+        df.pivot_table(
+            index="date",
+            columns="event_type",
+            values="timestamp",
+            aggfunc="count",
+            fill_value=0,
+        )
+        .reset_index()
+    )
 
     col_fail = _EVENT_AUTH_FAILED
     col_ok = _EVENT_AUTH_SUCCEEDED
@@ -298,7 +250,9 @@ def auth_failure_rate(
         .round(1)
         .fillna(0.0)
     )
-    pivot["date"] = pivot["day"].astype(str)
+
+    pivot["attempts"] = pivot["attempts"].astype(int)
+    pivot["failures"] = pivot["failures"].astype(int)
 
     return pivot[["date", "attempts", "failures", "failure_rate_pct"]].to_dict(
         orient="records"
