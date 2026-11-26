@@ -1,11 +1,11 @@
-"""REST endpoints for the HITO 18 business reporting pipeline.
+"""REST endpoints for the HITO 18 / HITO 19 business reporting pipeline.
 
 Endpoints
 ---------
 GET  /reporting/weekly-warehouse-client-performance
     Return aggregated KPI data, optionally filtered by week_start, warehouse, client_id.
 GET  /reporting/pipeline-runs/latest
-    Return status summary of the most recent pipeline execution (last 7 days).
+    Return status and metadata of the most recent pipeline run from ``pipeline_run_log``.
 POST /reporting/pipeline-runs
     Trigger a manual pipeline run with an optional date range.
 """
@@ -22,7 +22,7 @@ from sqlmodel import Session
 
 from services.api.cache import response_cache
 from services.api.database import engine
-from services.reporting.pipeline import run_pipeline
+from data.pipelines.pipeline import run_pipeline_flow
 from services.reporting.schemas import (
     WeeklyPerformanceEntry,
     WeeklyPerformanceResponse,
@@ -161,10 +161,14 @@ async def get_weekly_performance(
 
 @router.get("/pipeline-runs/latest")
 async def get_latest_pipeline_run() -> dict:
-    """Return status of the most recent pipeline run based on table data.
+    """Return status and metadata of the most recent pipeline run.
 
-    Instead of tracking separate pipeline_run metadata, this endpoint
-    infers the last run from the max ``updated_at`` in the reporting table.
+    Reads the 5 metadata fields from ``pipeline_run_log``:
+      - start_time
+      - end_time
+      - records_processed
+      - status
+      - error_message
     """
     cache_key = "reporting:pipeline:latest"
 
@@ -174,67 +178,53 @@ async def get_latest_pipeline_run() -> dict:
         return cached
 
     with Session(engine) as session:
-        # Check if the table has any data
-        count = session.execute(
-            sa_text("SELECT COUNT(*) FROM weekly_warehouse_client_performance")
-        ).scalar()
+        latest = session.execute(
+            sa_text("""
+                SELECT
+                    id, pipeline_name, start_time, end_time,
+                    records_processed, status, error_message, details
+                FROM pipeline_run_log
+                ORDER BY start_time DESC
+                LIMIT 1
+            """)
+        ).fetchone()
 
-        if count == 0:
+        if latest is None:
             payload = {
                 "status": "success",
                 "pipeline": {
-                    "processed_events": 0,
-                    "rows_written": 0,
-                    "weeks": [],
-                    "period": {
-                        "from": None,
-                        "to": None,
-                    },
+                    "id": None,
+                    "pipeline_name": "weekly_warehouse_client_performance",
+                    "start_time": None,
+                    "end_time": None,
+                    "records_processed": 0,
+                    "run_status": None,
+                    "error_message": None,
                 },
             }
             response_cache.set(cache_key, payload, ttl_seconds=60)
             return payload
 
-        # Latest update and stats
-        latest = session.execute(
-            sa_text("""
-                SELECT
-                    MAX(updated_at) as last_run,
-                    COUNT(*) as total_rows,
-                    COUNT(DISTINCT week_start) as week_count,
-                    SUM(inbound_units_count) as total_inbound,
-                    SUM(outbound_orders_count) as total_outbound,
-                    SUM(stockout_events_count) as total_stockout,
-                    ROUND(AVG(discrepancy_rate), 2) as avg_discrepancy
-                FROM weekly_warehouse_client_performance
-            """)
-        ).fetchone()
-
-        weeks = session.execute(
-            sa_text("""
-                SELECT DISTINCT week_start
-                FROM weekly_warehouse_client_performance
-                ORDER BY week_start DESC
-            """)
-        ).scalars().all()
+        def _fmt_ts(val: object) -> str | None:
+            if isinstance(val, datetime):
+                return val.isoformat()
+            if isinstance(val, str):
+                try:
+                    return datetime.fromisoformat(val).isoformat()
+                except (ValueError, TypeError):
+                    return None
+            return None
 
         payload = {
             "status": "success",
             "pipeline": {
-                "processed_events": 0,  # Not stored per-run; will be known on next trigger
-                "rows_written": latest.total_rows,
-                "weeks": list(weeks),
-                "period": {
-                    "from": weeks[-1] if weeks else None,
-                    "to": weeks[0] if weeks else None,
-                },
-                "last_run": str(latest.last_run) if latest.last_run else None,
-                "aggregates": {
-                    "total_inbound_units": int(latest.total_inbound or 0),
-                    "total_outbound_orders": int(latest.total_outbound or 0),
-                    "total_stockout_events": int(latest.total_stockout or 0),
-                    "avg_discrepancy_rate": float(latest.avg_discrepancy or 0.0),
-                },
+                "id": latest.id,
+                "pipeline_name": latest.pipeline_name,
+                "start_time": _fmt_ts(latest.start_time),
+                "end_time": _fmt_ts(latest.end_time),
+                "records_processed": latest.records_processed,
+                "run_status": latest.status,
+                "error_message": latest.error_message,
             },
         }
 
@@ -260,7 +250,7 @@ async def trigger_pipeline(
         "Default: now UTC.",
     ),
 ) -> dict:
-    """Manually trigger the ETL pipeline.
+    """Manually trigger the Prefect ETL pipeline.
 
     The pipeline reads business events from ``telemetry_events``,
     aggregates KPIs by ``(warehouse, client_id, week_start)``,
@@ -271,7 +261,7 @@ async def trigger_pipeline(
     )
 
     try:
-        summary = run_pipeline(
+        summary = run_pipeline_flow(
             start_date=start_date,
             end_date=end_date,
         )

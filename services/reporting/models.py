@@ -1,7 +1,10 @@
-"""SQLModel entities for the reporting schema (HITO 18 business pipeline).
+"""SQLModel entities for the reporting schema (HITO 18 / HITO 19 pipeline).
 
-Table ``reporting.weekly_warehouse_client_performance`` stores pre-computed
-weekly KPI aggregations per ``(warehouse, client_id)`` pair.
+Tables
+------
+- ``reporting.weekly_warehouse_client_performance`` — pre-computed weekly KPI
+  aggregations per ``(warehouse, client_id)`` pair.
+- ``reporting.pipeline_run_log`` — execution metadata for every pipeline run.
 """
 
 from __future__ import annotations
@@ -10,7 +13,61 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 from sqlalchemy import UniqueConstraint
-from sqlmodel import Field, SQLModel
+from sqlmodel import Column, DateTime, Field, SQLModel, Text
+
+
+class PipelineRunLog(SQLModel, table=True):
+    """Execution metadata for a single pipeline run.
+
+    Stores the 5 mandatory fields required by HITO 19:
+      - start_time
+      - end_time
+      - records_processed
+      - status
+      - error_message
+    plus a free-form ``details`` JSON field for extensibility.
+    """
+
+    __tablename__ = "pipeline_run_log"
+
+    id: str = Field(
+        default_factory=lambda: str(uuid4()),
+        primary_key=True,
+    )
+    pipeline_name: str = Field(
+        default="weekly_warehouse_client_performance",
+        nullable=False,
+    )
+    start_time: datetime = Field(
+        sa_type=DateTime(timezone=True),
+        nullable=False,
+    )
+    end_time: datetime | None = Field(
+        sa_type=DateTime(timezone=True),
+        default=None,
+        nullable=True,
+    )
+    records_processed: int = Field(default=0, ge=0)
+    status: str = Field(
+        default="running",
+        description="One of: running, success, error",
+    )
+    error_message: str | None = Field(
+        sa_type=Text,
+        default=None,
+        nullable=True,
+    )
+    details: str | None = Field(
+        sa_type=Text,
+        default=None,
+        nullable=True,
+        description="Optional JSON blob with extra run metadata",
+    )
+    created_at: datetime = Field(
+        sa_type=DateTime(timezone=True),
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
 
 
 class WeeklyWarehouseClientPerformance(SQLModel, table=True):

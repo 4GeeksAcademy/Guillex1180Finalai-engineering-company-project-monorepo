@@ -63,6 +63,7 @@ def create_db_and_tables() -> None:
         TelemetryRecord,
     )
     from services.reporting.models import (  # noqa: F401
+        PipelineRunLog,
         WeeklyWarehouseClientPerformance,
     )
 
