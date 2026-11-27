@@ -23,6 +23,7 @@ export default function ProtectedPage({ children }: { children: React.ReactNode 
             <Link href="/backoffice/inventory/orders/outbound" className="hover:text-blue-700">Registrar despacho o pérdida</Link>
             <Link href="/backoffice/inventory/orders" className="hover:text-blue-700">Movimientos de stock</Link>
             <Link href="/backoffice/incidents" className="hover:text-blue-700">Análisis de incidencias</Link>
+            <Link href="/backoffice/reporting" className="hover:text-blue-700">Reporte semanal</Link>
           </nav>
           <button className="rounded-lg border border-slate-300 px-3 py-2 text-sm hover:bg-slate-50" onClick={() => { clearSession(); router.replace('/login'); }}>Cerrar sesión</button>
         </div>

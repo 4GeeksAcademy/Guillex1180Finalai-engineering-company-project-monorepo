@@ -1,24 +1,36 @@
-"""Prefect 3 ETL pipeline for TrackFlow weekly business KPIs (HITO 19).
+"""Prefect 3 ETL pipeline for TrackFlow weekly business KPIs (HITO 20).
 
 This pipeline reads business events from ``telemetry_events``, aggregates
 the four KPIs defined in the BRIEFING (inbound volume, outbound throughput,
 stockout frequency, discrepancy rate), and upserts the results into
 ``reporting.weekly_warehouse_client_performance``.
 
+Architecture (HITO 20 — Subflows)
+----------------------------------
+The pipeline is divided into **3 subflows** (`@flow`), each independently
+executable with explicit inputs and outputs:
+
+  1. ``subflow_extract``      — Load client_map + extract business events
+  2. ``subflow_transform``    — Parse tags, resolve clients, aggregate KPIs
+  3. ``subflow_load``         — UPSERT results + log pipeline run
+
+A 4th optional subflow (``subflow_notify``) is invoked via
+``return_state=True`` so a failure there never aborts the ETL.
+
 Resilience features
 -------------------
 - ``retries`` / ``retry_delay_seconds`` on tasks that touch the database.
 - ``cache_key_fn`` / ``cache_expiration`` on the expensive transform task.
-- ``return_state=True`` on the optional notify task so a failure there does
-  not abort the ETL.
-- Idempotent UPSERT (INSERT … ON CONFLICT DO UPDATE).
+- Optional subflow uses ``return_state=True`` so a notification failure
+  does not abort the ETL.
+- Idempotent UPSERT (SELECT + UPDATE/INSERT).
 - Run metadata logged to ``reporting.pipeline_run_log``.
 
 Usage
 -----
-    python data/pipelines/pipeline.py
+    python services/reporting/pipeline_v2.py
 
-    python data/pipelines/pipeline.py --start-date 2026-07-13 --end-date 2026-07-20
+    python services/reporting/pipeline_v2.py --start-date 2026-07-13 --end-date 2026-07-20
 """
 
 from __future__ import annotations
@@ -63,7 +75,7 @@ _BUSINESS_EVENTS = (
 
 
 # ===================================================================
-# Tasks
+# Tasks (operaciones atómicas reutilizables por los subflows)
 # ===================================================================
 
 
@@ -271,9 +283,6 @@ def load_upsert_results(aggregated: pd.DataFrame) -> int:
 
     Idempotente: usa SELECT + UPDATE/INSERT manual con unique constraint
     (warehouse, client_id, week_start).
-
-    Se configuran 2 reintentos (menos que en extract porque la probabilidad
-    de conflicto de escritura es menor, pero sigue siendo un servicio externo).
     """
     if aggregated.empty:
         logger.info("No rows to upsert")
@@ -394,15 +403,7 @@ def log_pipeline_run(
     error_message: str | None = None,
     details: dict | None = None,
 ) -> None:
-    """Registrar metadata de la corrida en reporting.pipeline_run_log.
-
-    Almacena los 5 campos obligatorios de metadata:
-      - start_time
-      - end_time
-      - records_processed
-      - status (running / success / error)
-      - error_message
-    """
+    """Registrar metadata de la corrida en reporting.pipeline_run_log."""
     with Session(engine) as session:
         stmt = sa_text("""
             INSERT INTO pipeline_run_log
@@ -436,7 +437,134 @@ def log_pipeline_run(
 
 
 # ===================================================================
-# Flow principal
+# Subflows (HITO 20 — cada fase es un @flow independiente)
+# ===================================================================
+
+
+@flow(name="subflow_extract_events")
+def subflow_extract(
+    start_date: str,
+    end_date: str,
+) -> tuple[pd.DataFrame, dict[str, str]]:
+    """Subflow 1/3: Extracción — cargar client_map + eventos de telemetría.
+
+    Returns
+    -------
+    tuple[pd.DataFrame, dict[str, str]]
+        (DataFrame de eventos, client_map para resolución de nombres).
+    """
+    logger.info("=== Subflow EXTRACT: %s → %s ===", start_date, end_date)
+    client_map = load_client_map()
+    df = extract_business_events(start_date, end_date)
+    return df, client_map
+
+
+@flow(name="subflow_transform_kpis")
+def subflow_transform(
+    df: pd.DataFrame,
+    client_map: dict[str, str],
+) -> pd.DataFrame:
+    """Subflow 2/3: Transformación — parsear, resolver, agregar KPIs.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Eventos crudos de telemetry_events.
+    client_map : dict[str, str]
+        Mapping de nombres normalizados a client_id.
+
+    Returns
+    -------
+    pd.DataFrame
+        KPIs agregados por (warehouse, client_id, week_start).
+    """
+    logger.info("=== Subflow TRANSFORM: %d events ===", len(df))
+    if df.empty:
+        return df
+    aggregated = transform_aggregate_kpis(df, client_map)
+    return aggregated
+
+
+@flow(name="subflow_load_results")
+def subflow_load(
+    aggregated: pd.DataFrame,
+    df: pd.DataFrame,
+    start_time: datetime,
+) -> dict[str, Any]:
+    """Subflow 3/3: Carga — UPSERT resultados + log de corrida.
+
+    Parameters
+    ----------
+    aggregated : pd.DataFrame
+        KPIs a escribir en la tabla de reporting.
+    df : pd.DataFrame
+        DataFrame original de eventos (solo para conteo).
+    start_time : datetime
+        Timestamp de inicio de la ejecución.
+
+    Returns
+    -------
+    dict
+        Resumen con ``processed_events``, ``rows_written``, ``weeks``,
+        ``status``.
+    """
+    logger.info("=== Subflow LOAD: %d KPI rows ===", len(aggregated))
+
+    result: dict[str, Any] = {
+        "processed_events": len(df),
+        "rows_written": 0,
+        "weeks": [],
+        "status": "success",
+    }
+
+    if aggregated.empty:
+        logger.info("No KPI rows to load")
+        end_time = datetime.now(timezone.utc)
+        log_pipeline_run(
+            start_time=start_time,
+            end_time=end_time,
+            records_processed=len(df),
+            status="success",
+            details=result,
+        )
+        return result
+
+    written = load_upsert_results(aggregated)
+    weeks = sorted(aggregated["week_start"].unique().tolist())
+
+    result["rows_written"] = written
+    result["weeks"] = weeks
+
+    end_time = datetime.now(timezone.utc)
+    log_pipeline_run(
+        start_time=start_time,
+        end_time=end_time,
+        records_processed=len(df),
+        status="success",
+        details=result,
+    )
+
+    return result
+
+
+@flow(name="subflow_notify")
+def subflow_notify(summary: dict[str, Any]) -> str:
+    """Subflow 4/4 (opcional): Notificar que el pipeline terminó.
+
+    Se invoca con ``return_state=True`` desde el flow principal,
+    por lo que un fallo aquí NO interrumpe el ETL.
+    """
+    msg = (
+        f"Pipeline completed: {summary.get('processed_events', 0)} events, "
+        f"{summary.get('rows_written', 0)} rows written, "
+        f"status={summary.get('status', 'unknown')}"
+    )
+    logger.info("Notification: %s", msg)
+    return msg
+
+
+# ===================================================================
+# Flow principal — coordina los 3 subflows en secuencia
 # ===================================================================
 
 
@@ -446,6 +574,14 @@ def run_pipeline_flow(
     end_date: str | None = None,
 ) -> dict[str, Any]:
     """Ejecutar el pipeline ETL semanal con tolerancia a fallos.
+
+    El flow principal coordina 3 subflows en secuencia:
+      1. ``subflow_extract``  — extrae datos
+      2. ``subflow_transform`` — transforma y agrega KPIs
+      3. ``subflow_load``     — carga resultados
+
+    Un 4º subflow opcional (``subflow_notify``) se invoca con
+    ``return_state=True`` para que un fallo no interrumpa el pipeline.
 
     Parameters
     ----------
@@ -493,11 +629,8 @@ def run_pipeline_flow(
     }
 
     try:
-        # ── 2. Cargar client_map ─────────────────────────────────────────
-        client_map = load_client_map()
-
-        # ── 3. Extraer eventos ────────────────────────────────────────────
-        df = extract_business_events(s, e)
+        # ── Subflow 1: Extracción ────────────────────────────────────────
+        df, client_map = subflow_extract(s, e)
 
         if df.empty:
             logger.info("Pipeline: no business events found")
@@ -511,36 +644,21 @@ def run_pipeline_flow(
             )
             return result
 
-        # ── 4. Transformar y agregar (con caché) ─────────────────────────
-        aggregated = transform_aggregate_kpis(df, client_map)
+        # ── Subflow 2: Transformación ───────────────────────────────────
+        aggregated = subflow_transform(df, client_map)
 
-        if aggregated.empty:
-            end_time = datetime.now(timezone.utc)
-            result["processed_events"] = len(df)
-            result["status"] = "warning"
-            log_pipeline_run(
-                start_time=start_time,
-                end_time=end_time,
-                records_processed=len(df),
-                status="success",
-                details=result,
-            )
-            return result
+        # ── Subflow 3: Carga ─────────────────────────────────────────────
+        load_result = subflow_load(aggregated, df, start_time)
+        result.update(load_result)
 
-        # ── 5. Cargar (UPSERT) ───────────────────────────────────────────
-        written = load_upsert_results(aggregated)
-
-        weeks = sorted(aggregated["week_start"].unique().tolist())
-        result["processed_events"] = len(df)
-        result["rows_written"] = written
-        result["weeks"] = weeks
-
-        # ── 6. Notificar (opcional — no crítica) ─────────────────────────
-        try:
-            notify_pipeline_complete(result)
-        except Exception as notify_err:
+        # ── Subflow 4 (opcional): Notificar ──────────────────────────────
+        notify_state = subflow_notify.with_options(
+            return_state=True
+        )(result)
+        if notify_state.is_failed():
             logger.warning(
-                "Notification task failed (non-critical): %s", notify_err
+                "Notification subflow failed (non-critical): %s",
+                notify_state.result(),
             )
 
     except Exception as exc:
@@ -558,41 +676,14 @@ def run_pipeline_flow(
         )
         return result
 
-    end_time = datetime.now(timezone.utc)
-
-    # ── 7. Registrar metadata de corrida ──────────────────────────────────
-    log_pipeline_run(
-        start_time=start_time,
-        end_time=end_time,
-        records_processed=len(df),
-        status="success",
-        details=result,
-    )
-
     logger.info(
         "Pipeline: processed %d events, wrote %d rows across %d weeks",
-        len(df),
-        written,
-        len(weeks),
+        result["processed_events"],
+        result["rows_written"],
+        result["weeks"],
     )
 
     return result
-
-
-@task
-def notify_pipeline_complete(summary: dict[str, Any]) -> str:
-    """Task opcional no crítica: notificar que el pipeline terminó.
-
-    Si esta tarea falla (por ejemplo, el sistema de logging remoto no
-    responde), el flujo principal NO se interrumpe.
-    """
-    msg = (
-        f"Pipeline completed: {summary.get('processed_events', 0)} events, "
-        f"{summary.get('rows_written', 0)} rows written, "
-        f"status={summary.get('status', 'unknown')}"
-    )
-    logger.info("Notification: %s", msg)
-    return msg
 
 
 # ===================================================================
